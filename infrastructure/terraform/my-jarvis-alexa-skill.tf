@@ -129,7 +129,7 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
     aws_s3_object.my_jarvis_skill_handler_lambda_jar
   ]
   function_name    = "${var.application_prefix}-function"
-  description      = "Backend function for the My J.A.R.V.I.S Alexa Skill"
+  description      = "Backend function for the My Jarvis Alexa Skill"
   s3_bucket        = aws_s3_bucket.my_jarvis_alexa_skill_handler_lambda_artifacts.id
   s3_key           = aws_s3_object.my_jarvis_skill_handler_lambda_jar.key
   source_code_hash = data.local_file.my_jarvis_skill_handler_jar_file.content_base64sha256
@@ -166,7 +166,7 @@ resource "aws_lambda_permission" "my_jarvis_alexa_skill_handler_cloudwatch_trigg
 
 resource "aws_cloudwatch_event_rule" "my_jarvis_alexa_skill_handler_knowledge_base" {
   name                = "${var.application_prefix}-knowledge-update"
-  description         = "Update My J.A.R.V.I.S knowledge base continuously"
+  description         = "Update My Jarvis knowledge base continuously"
   schedule_expression = "rate(1 minute)"
 }
 
