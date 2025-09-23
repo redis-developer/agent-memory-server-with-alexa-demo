@@ -1,0 +1,59 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "My Jarvis",
+          "summary": "Your personal AI assistant inspired by J.A.R.V.I.S",
+          "description": "This AI assistant helps you remember important information, set intelligent reminders, and provides contextual assistance throughout your day. Like Tony Stark's faithful companion, My Jarvis learns about you over time to provide increasingly personalized assistance. J.A.R.V.I.S means: Just A Rather Very Intelligent System.",
+          "smallIconUri": "file://assets/myjarvis_logo_small_icon.png",
+          "largeIconUri": "file://assets/myjarvis_logo_large_icon.png",
+          "examplePhrases": [
+            "Alexa tell my jarvis to remember my favorite color is blue",
+            "Alexa ask my jarvis to recall my favorite color",
+            "Alexa ask my jarvis to suggest what should I wear today"
+          ],
+          "keywords": [
+            "jarvis",
+            "AI assistant",
+            "personal assistant",
+            "reminders",
+            "memory",
+            "smart assistant",
+            "productivity"
+          ]
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "Sample testing phrases:\n1. 'Alexa, open my jarvis' - Launches the skill\n2. 'Alexa, ask my jarvis to remember my favorite coffee is latte' - Stores a memory\n3. 'Alexa, ask my jarvis to recall my favorite coffee' - Recalls information\n4. 'Alexa, ask my jarvis to remind me to call mom in 5 minutes' - Creates a reminder\n\nThe skill maintains context across sessions and provides personalized responses based on stored memories.",
+      "distributionCountries": []
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "https://api.restful-api.dev/objects",
+          "sslCertificateType": "Wildcard"
+        }
+      }
+    },
+    "permissions": [
+      {
+        "name": "alexa::alerts:reminders:skill:readwrite"
+      },
+      {
+        "name": "alexa::profile:given_name:read"
+      },
+      {
+        "name": "alexa::person_id:read"
+      }
+    ],
+    "manifestVersion": "1.0",
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "isChildDirected": false,
+      "usesPersonalInfo": true
+    }
+  }
+}

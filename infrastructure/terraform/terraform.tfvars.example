@@ -1,0 +1,14 @@
+application_prefix = "my-jarvis"
+
+subscription_name              = "redisdb"
+database_name                  = "redisdb"
+payment_card_type              = "Visa"
+payment_card_last_four         = "000"
+essentials_plan_cloud_provider = "AWS"
+essentials_plan_cloud_region   = "us-east-1"
+
+openai_api_key    = "your-openai-api-key"
+openai_model_name = "gpt-4o-mini"
+
+knowledge_base_bucket_name = "my-jarvis-knowledge-base"
+alexa_skill_id = "your-alexa-skill-id"

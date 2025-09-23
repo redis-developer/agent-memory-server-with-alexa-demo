@@ -1,0 +1,155 @@
+#!/bin/bash
+set -e
+
+# Log all output
+exec > >(tee /var/log/user-data.log)
+exec 2>&1
+
+echo "Starting Redis Memory Server setup..."
+
+# Wait for apt to be ready
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  echo "Waiting for apt to be ready..."
+  sleep 5
+done
+
+# Update system
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+
+# Install dependencies for pyenv and Python build
+apt-get install -y \
+  unzip \
+  git \
+  curl \
+  wget \
+  build-essential \
+  libssl-dev \
+  zlib1g-dev \
+  libbz2-dev \
+  libreadline-dev \
+  libsqlite3-dev \
+  libncursesw5-dev \
+  xz-utils \
+  tk-dev \
+  libxml2-dev \
+  libxmlsec1-dev \
+  libffi-dev \
+  liblzma-dev
+
+# Install pyenv
+export PYENV_ROOT="/opt/pyenv"
+curl https://pyenv.run | bash
+
+# Configure pyenv
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# Install Python 3.12
+pyenv install 3.12.0
+pyenv global 3.12.0
+
+# Verify Python installation
+python --version
+pip --version
+
+# Install uv and agent-memory-client
+pip install --upgrade pip
+pip install uv agent-memory-client
+
+# Create app directory
+mkdir -p /opt/memory-server
+cd /opt/memory-server
+
+# Clone repository
+#git clone https://github.com/redis/agent-memory-server.git
+wget https://github.com/redis/agent-memory-server/archive/refs/tags/server/v0.12.1.zip -O agent-memory-server.zip
+unzip agent-memory-server.zip
+mv agent-memory-server-server-0.11.0 agent-memory-server
+cd agent-memory-server
+
+# Create environment file
+cat > .env << 'EOF'
+# Disable authentication for development
+DISABLE_AUTH=true
+
+# Redis connection
+REDIS_URL=${redis_database_url}
+
+# Enable all memory features
+LONG_TERM_MEMORY=true
+ENABLE_DISCRETE_MEMORY_EXTRACTION=true
+
+# AI API keys
+OPENAI_API_KEY=${openai_api_key}
+
+# Server settings
+HOST=0.0.0.0
+PORT=8000
+EOF
+
+# Install dependencies with uv
+uv sync
+
+# Create systemd service for API server
+cat > /etc/systemd/system/memory-api.service << 'EOF'
+[Unit]
+Description=Redis Memory API Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/memory-server/agent-memory-server
+Environment="PYENV_ROOT=/opt/pyenv"
+Environment="PATH=/opt/pyenv/shims:/opt/pyenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/opt/pyenv/shims/uv run agent-memory api
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create systemd service for task worker
+cat > /etc/systemd/system/memory-worker.service << 'EOF'
+[Unit]
+Description=Redis Memory Task Worker
+After=memory-api.service
+Requires=memory-api.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/memory-server/agent-memory-server
+Environment="PYENV_ROOT=/opt/pyenv"
+Environment="PATH=/opt/pyenv/shims:/opt/pyenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/opt/pyenv/shims/uv run agent-memory task-worker --concurrency 10
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create a profile script for pyenv (for SSH sessions)
+cat > /etc/profile.d/pyenv.sh << 'EOF'
+export PYENV_ROOT="/opt/pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
+EOF
+
+# Wait a moment
+sleep 5
+
+# Enable and start services
+systemctl daemon-reload
+systemctl enable memory-api.service memory-worker.service
+systemctl start memory-api.service
+systemctl start memory-worker.service
+
+echo "Redis Memory Server setup complete!"
+echo "Python version: $(python --version)"
+echo "API available at http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8000"
