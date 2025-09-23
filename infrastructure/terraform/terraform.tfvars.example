@@ -3,7 +3,7 @@ application_prefix = "my-jarvis"
 subscription_name              = "redisdb"
 database_name                  = "redisdb"
 payment_card_type              = "Visa"
-payment_card_last_four         = "000"
+payment_card_last_four         = "0000"
 essentials_plan_cloud_provider = "AWS"
 essentials_plan_cloud_region   = "us-east-1"
 
