@@ -44,6 +44,18 @@ variable "openai_model_name" {
   type        = string
 }
 
+variable "openai_chat_temperature" {
+  description = "Temperature setting for OpenAI chat model"
+  type        = number
+  default     = 0.7
+}
+
+variable "openai_chat_max_tokens" {
+  description = "Maximum tokens for OpenAI chat model"
+  type        = number
+  default     = 250
+}
+
 variable "alexa_skill_id" {
   type = string
 }

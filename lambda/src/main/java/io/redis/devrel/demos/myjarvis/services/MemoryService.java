@@ -188,7 +188,9 @@ public class MemoryService {
                     "POST"
             );
 
+            logger.debug("Executing request: " + request.toString());
             var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.debug("Finishing search execution. Response status: " + response.statusCode());
 
             if (response.statusCode() == HttpStatus.SC_OK) {
                 var memories = objectMapper.readTree(response.body()).path("memories");

@@ -19,8 +19,7 @@ import io.redis.devrel.demos.myjarvis.tools.DateTimeTool;
 
 import java.util.List;
 
-import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_API_KEY;
-import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_MODEL_NAME;
+import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
 
 public class MyJarvisStreamHandler extends SkillStreamHandler {
 
@@ -29,10 +28,8 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
     private static final ChatModel chatModel = OpenAiChatModel.builder()
             .apiKey(OPENAI_API_KEY)
             .modelName(OPENAI_MODEL_NAME)
-            .logRequests(false)
-            .logResponses(false)
-            .temperature(0.0)
-            .maxTokens(16384)
+            .temperature(Double.parseDouble(OPENAI_CHAT_TEMPERATURE))
+            .maxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
             .build();
 
     // Tool components

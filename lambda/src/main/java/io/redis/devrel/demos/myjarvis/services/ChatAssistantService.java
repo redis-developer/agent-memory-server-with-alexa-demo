@@ -60,9 +60,9 @@ public class ChatAssistantService {
 
         ChatMemory chatMemory = getChatMemory(userId);
         RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
-        ChatAssistant assistant = createContextualAssistant(chatMemory, augmentor);
+        ChatAssistant contextualAssistant = createContextualAssistant(chatMemory, augmentor);
 
-        return assistant.chat(systemPrompt, userId, userName, query);
+        return contextualAssistant.chat(systemPrompt, userId, userName, query);
     }
 
     private ChatAssistant createBasicAssistant() {
