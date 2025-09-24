@@ -12,13 +12,18 @@ import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
 
 public class ChatAssistantService {
 
+    private static final int CHAT_MEMORY_MAX_CACHE_SIZE = 100;
+    private static final Duration CHAT_MEMORY_CACHE_TTL = Duration.ofMinutes(5);
     private static final Logger logger = LoggerFactory.getLogger(ChatAssistantService.class);
 
     private final List<Object> tools;
@@ -27,6 +32,7 @@ public class ChatAssistantService {
 
     private final ChatAssistant basicAssistant;
     private final ContentRetriever knowledgeBaseRetriever;
+    private final Map<String, CachedChatMemory> chatMemoryCache = new ConcurrentHashMap<>();
 
     public ChatAssistantService(List<Object> tools,
                                 ChatModel chatModel,
@@ -52,9 +58,9 @@ public class ChatAssistantService {
                                           String query) {
         logger.debug("Processing query with context for user: {}", userId);
 
-        ChatMemory conversationMemory = getConversationMemory(userId);
+        ChatMemory chatMemory = getChatMemory(userId);
         RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
-        ChatAssistant assistant = createContextualAssistant(conversationMemory, augmentor);
+        ChatAssistant assistant = createContextualAssistant(chatMemory, augmentor);
 
         return assistant.chat(systemPrompt, userId, userName, query);
     }
@@ -64,12 +70,6 @@ public class ChatAssistantService {
                 .chatModel(chatModel)
                 .tools(tools)
                 .build();
-    }
-
-    // Each user has their own conversation memory stored at
-    // the agent memory server based on the userId provided
-    private ChatMemory getConversationMemory(String userId) {
-        return new WorkingMemoryChat(userId, AGENT_MEMORY_SERVER_URL);
     }
 
     private ChatAssistant createContextualAssistant(ChatMemory memory,
@@ -115,5 +115,69 @@ public class ChatAssistantService {
                 .stream()
                 .map(Content::from)
                 .toList();
+    }
+
+    private ChatMemory getChatMemory(String userId) {
+        // Clean up expired entries periodically
+        cleanupExpiredEntries();
+
+        CachedChatMemory cachedChatMemory = chatMemoryCache.get(userId);
+
+        // Check if we have a valid cached entry
+        if (cachedChatMemory != null && !cachedChatMemory.isExpired()) {
+            logger.debug("Using cached WorkingMemoryChat for user: {}", userId);
+            return cachedChatMemory.memory;
+        }
+
+        // Remove expired entry if exists
+        if (cachedChatMemory != null) {
+            chatMemoryCache.remove(userId);
+            logger.debug("Removed expired WorkingMemoryChat for user: {}", userId);
+        }
+
+        // Add to cache if we haven't exceeded the maximum size
+        if (chatMemoryCache.size() >= CHAT_MEMORY_MAX_CACHE_SIZE) {
+            evictOldestEntry();
+        }
+
+        // Create new WorkingMemoryChat
+        logger.debug("Creating new WorkingMemoryChat for user: {}", userId);
+        WorkingMemoryChat workingMemoryChat = new WorkingMemoryChat(userId, AGENT_MEMORY_SERVER_URL);
+        chatMemoryCache.put(userId, new CachedChatMemory(workingMemoryChat));
+
+        return workingMemoryChat;
+    }
+
+    private void cleanupExpiredEntries() {
+        chatMemoryCache.entrySet().removeIf(entry -> {
+            boolean expired = entry.getValue().isExpired();
+            if (expired) {
+                logger.debug("Removing expired cache entry for user: {}", entry.getKey());
+            }
+            return expired;
+        });
+    }
+
+    private void evictOldestEntry() {
+        chatMemoryCache.entrySet().stream()
+                .min((e1, e2) -> e1.getValue().createdAt.compareTo(e2.getValue().createdAt))
+                .ifPresent(oldest -> {
+                    chatMemoryCache.remove(oldest.getKey());
+                    logger.debug("Evicted oldest cache entry for user: {}", oldest.getKey());
+                });
+    }
+
+    private static class CachedChatMemory {
+        final WorkingMemoryChat memory;
+        final Instant createdAt;
+
+        CachedChatMemory(WorkingMemoryChat memory) {
+            this.memory = memory;
+            this.createdAt = Instant.now();
+        }
+
+        boolean isExpired() {
+            return Duration.between(createdAt, Instant.now()).compareTo(CHAT_MEMORY_CACHE_TTL) > 0;
+        }
     }
 }
