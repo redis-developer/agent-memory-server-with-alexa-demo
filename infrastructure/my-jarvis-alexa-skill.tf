@@ -8,13 +8,13 @@ resource "null_resource" "my_jarvis_alexa_skill_handler_build" {
   provisioner "local-exec" {
     command     = "mvn clean package"
     interpreter = ["bash", "-c"]
-    working_dir = "../../lambda"
+    working_dir = "../lambda"
   }
 }
 
 data "local_file" "my_jarvis_skill_handler_jar_file" {
   depends_on = [null_resource.my_jarvis_alexa_skill_handler_build]
-  filename   = "../../lambda/target/my-jarvis-alexa-skill-1.0.jar"
+  filename   = "../lambda/target/my-jarvis-alexa-skill-1.0.jar"
 }
 
 resource "aws_s3_bucket" "my_jarvis_alexa_skill_handler_lambda_artifacts" {

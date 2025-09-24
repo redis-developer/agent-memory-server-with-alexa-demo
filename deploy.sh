@@ -46,7 +46,7 @@ fi
 
 echo "⚙️ Deploying the Lambda function"
 
-cd infrastructure/terraform
+cd infrastructure
 
 if [ ! -f terraform.tfvars.backup ]; then
   cp terraform.tfvars terraform.tfvars.backup
@@ -68,7 +68,7 @@ LAMBDA_ARN=$(terraform output -raw my_jarvis_alexa_skill_handler_arn)
 
 echo "⚙️ Updating the Alexa skill endpoint"
 
-cd ../../
+cd ../
 
 if [ ! -f skill-package/skill.json.backup ]; then
   cp skill-package/skill.json skill-package/skill.json.backup

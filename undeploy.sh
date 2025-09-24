@@ -4,7 +4,7 @@
 
 echo "⚙️ Undeploying the Lambda function"
 
-cd infrastructure/terraform
+cd infrastructure
 
 terraform destroy -auto-approve
 if [[ -f terraform.tfvars.backup ]]; then
@@ -15,7 +15,7 @@ fi
 
 echo "⚙️ Removing the Alexa skill"
 
-cd ../../
+cd ../
 
 if [[ -f .ask/ask-states.json ]]; then
   SKILL_ID=$(jq -r '.profiles.default.skillId' .ask/ask-states.json)

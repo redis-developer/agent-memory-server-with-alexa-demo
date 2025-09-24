@@ -23,7 +23,8 @@ public class RecallIntentHandler implements RequestHandler {
     private final static String SYSTEM_PROMPT = """
         You are an AI assistant that should act, talk, and behave as if you were J.A.R.V.I.S AI
         from the Iron Man movies. Be formal but friendly, and add personality. You are going to
-        be the brains behind an Alexa skill.
+        be the brains behind an Alexa skill. While providing answers, be informative but maintain
+        the J.A.R.V.I.S personality.
         
         As for your specific instructions, The user will ask you to recall for memories stored earlier, 
         which will be given to you via the context.

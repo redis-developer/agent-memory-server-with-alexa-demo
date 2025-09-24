@@ -29,14 +29,14 @@ build/
 .DS_Store
 
 ### Terraform
-infrastructure/terraform/.terraform
-infrastructure/terraform/.terraform.lock.hcl
-infrastructure/terraform/terraform.tfstate
-infrastructure/terraform/terraform.tfstate.backup
-infrastructure/terraform/*.pem
-infrastructure/terraform/terraform.tfvars
-infrastructure/terraform/terraform.tfvars.backup
-infrastructure/terraform/.terraform.tfstate.lock.info
+infrastructure/.terraform
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.backup
+infrastructure/*.pem
+infrastructure/terraform.tfvars
+infrastructure/terraform.tfvars.backup
+infrastructure/.terraform.tfstate.lock.info
 
 ### Skill
 .ask
