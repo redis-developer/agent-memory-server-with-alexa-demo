@@ -18,12 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
+import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
 
 public class ChatAssistantService {
 
-    private static final int CHAT_MEMORY_MAX_CACHE_SIZE = 100;
-    private static final Duration CHAT_MEMORY_CACHE_TTL = Duration.ofMinutes(5);
     private static final Logger logger = LoggerFactory.getLogger(ChatAssistantService.class);
 
     private final List<Object> tools;
@@ -136,7 +134,8 @@ public class ChatAssistantService {
         }
 
         // Add to cache if we haven't exceeded the maximum size
-        if (chatMemoryCache.size() >= CHAT_MEMORY_MAX_CACHE_SIZE) {
+        int chatMemoryMaxCacheSize = Integer.parseInt(CHAT_MEMORY_MAX_CACHE_SIZE);
+        if (chatMemoryCache.size() >= chatMemoryMaxCacheSize) {
             evictOldestEntry();
         }
 
@@ -177,7 +176,10 @@ public class ChatAssistantService {
         }
 
         boolean isExpired() {
-            return Duration.between(createdAt, Instant.now()).compareTo(CHAT_MEMORY_CACHE_TTL) > 0;
+            Duration chatMemoryCacheTtl = Duration.ofMinutes(
+                Long.parseLong(CHAT_MEMORY_CACHE_TTL_MINUTES)
+            );
+            return Duration.between(createdAt, Instant.now()).compareTo(chatMemoryCacheTtl) > 0;
         }
     }
 }
