@@ -183,7 +183,7 @@ public class MemoryService {
     private List<JsonNode> executeSearch(Map<String, Object> searchRequest) {
         try {
             var request = buildJsonRequest(
-                    URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search"),
+                    URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search?optimize_query=false"),
                     searchRequest,
                     "POST"
             );

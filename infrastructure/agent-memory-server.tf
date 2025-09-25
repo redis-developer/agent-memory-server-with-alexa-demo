@@ -92,6 +92,10 @@ resource "aws_instance" "agent_memory_server" {
   tags = {
     Name = "${var.application_prefix}-agent-memory-server"
   }
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 # Outputs
