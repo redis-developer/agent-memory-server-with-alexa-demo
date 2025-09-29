@@ -12,6 +12,8 @@ This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa
 - [Redis Cloud account](https://redis.io/try-free) to create a Redis database for the memory server
 
 ## 📋 Software requirements
+- Java 21+: https://www.oracle.com/java/technologies/downloads/
+- Maven 3.9+: https://maven.apache.org/install.html
 - Terraform: https://developer.hashicorp.com/terraform/install
 - ASK CLI: https://github.com/alexa/ask-cli
 - JQ: https://jqlang.org/
@@ -46,15 +48,20 @@ export REDISCLOUD_ACCESS_KEY=<THIS_IS_GOING_TO_BE_YOUR_API_ACCOUNT_KEY>
 export REDISCLOUD_SECRET_KEY=<THIS_IS_GOING_TO_BE_ONE_API_USER_KEY>
  ```
 
-4. **Terraform Variables File**
-   - Copy the example file and edit it:
-     ```sh
-     cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
-     # Edit terraform.tfvars and set the appropriate values (AWS region, resource names, etc.)
-     ```
+## Terraform configuration
 
-5. **Java 21+ and Maven 3.9++**
-   - Required for building the Lambda function.
+During deployment, resources will be created by Terraform based on the variables you provide. You need to create a variables file with the correct information so the deployment can happen successfully.
+
+1. Create a Terraform variables file by copying the example provided:
+```sh
+cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
+```
+2. Edit `infrastructure/terraform/terraform.tfvars` to set the following variables:
+- `payment_card_type`: The credit card associated with your Redis Cloud account (e.g., "Visa").
+- `payment_card_last_four`: The last four digits of the credit card associated with your Redis Cloud account (e.g., "1234").
+- `essentials_plan_cloud_provider`: The cloud provider where you want your Redis database to be hosted (e.g., "AWS").
+- `essentials_plan_cloud_region`: The region where you want your Redis database to be hosted (e.g., "us-east-1").
+- `openai_api_key`: The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories.
 
 ## Installation & Deployment
 
