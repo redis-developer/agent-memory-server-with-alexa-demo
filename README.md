@@ -12,12 +12,16 @@ This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa
 - [Redis Cloud account](https://redis.io/try-free) to create a Redis database for the memory server
 
 ## 📋 Software requirements
-- Java 21+: https://www.oracle.com/java/technologies/downloads/
-- Maven 3.9+: https://maven.apache.org/install.html
-- Terraform: https://developer.hashicorp.com/terraform/install
-- ASK CLI: https://github.com/alexa/ask-cli
-- JQ: https://jqlang.org/
-- SED: https://formulae.brew.sh/formula/gnu-sed
+
+| Software                                                                                              | Description                                                                                 |
+|:------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------|
+| [Java 21+](https://www.oracle.com/java/technologies/downloads)                                        | Since the Lambda function is implemented in Java, you need JDK 21+ to compile and build it. |
+| [Maven 3.9+](https://maven.apache.org/install.html)	                                                  | Maven is required to manage the dependencies and package the JAR file with the code.        |
+| [Terraform](https://developer.hashicorp.com/terraform/install)                                        | Terraform is used to create and destroy resources on AWS, as well as on Redis Cloud.        |
+| [AWS CLI](https://github.com/aws/aws-cli)                                                             | You need to have the AWS CLI installed locally to configure your AWS credentials.           |
+| [ASK CLI](https://github.com/alexa/ask-cli)                                                           | You need to have the ASK CLI installed locally to package and build your the skill.         |
+| [JQ](https://jqlang.org/)                                                                             | JSON files are parsed during deployment, and JQ is used for that specific task.             |
+| [SED](https://formulae.brew.sh/formula/gnu-sed)                                                       | SED is used in the bash scripts to find and replace variables in different files.           |
 
 ## ‍💻 Preparing for deployment
 
