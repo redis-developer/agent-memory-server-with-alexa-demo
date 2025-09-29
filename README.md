@@ -2,6 +2,10 @@
 
 Amazon Alexa is arguably one of the most popular virtual assistant devices available in many homes worldwide. It enables users to automate mundane tasks, such as setting timers, playing music, and making phone calls. It would be great if only one thing weren't true—it doesn't really remember anything. Whatever conversations you have with Alexa, it won't be used in future conversations as context for more elaborate, polished, and well-tailored answers. Therefore, repeating yourself with Alexa is a common occurrence. This repository changes everything by providing you with a memory-enabled skill for Amazon Alexa, capable of reusing previous memories and providing a more contextual conversation with users, allowing them to use Alexa in a more impactful manner.
 
+![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
+
+This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa/alexa-skills-kit) using [Java](https://www.java.com/en). The behavior of the skill is deployed as an [AWS Lambda](https://aws.amazon.com/lambda) function, which in turn manages memories using the [Redis Agent Memory Server](https://redis.github.io/agent-memory-server). The build and deployment of the Alexa skill is fully automated using Bash scripts, Terraform, and the ASK CLI.
+
 ## Features
 - Conversational Alexa skill with context retention
 - Memory recall and forget functionality
