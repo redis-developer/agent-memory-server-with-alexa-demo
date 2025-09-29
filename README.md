@@ -8,11 +8,11 @@ This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa
 
 ## 🧑🏻‍💻 Account requirements
 
-| Account                                                   | Description                                                                          |
-|:----------------------------------------------------------|:-------------------------------------------------------------------------------------|
-| [AWS account](https://aws.amazon.com/account)             | You need to have an AWS account with permissions to create lambda and IAM resources. |
-| [Amazon developer account](https://developer.amazon.com)	 | You need to have a Amazon developer account to create and deploy Alexa skills.       |
-| [Redis Cloud](https://redis.io/try-free)                  | You need to have an account with Redis Cloud to create the required database.        |
+| Account                                                   | Description                                                                                                                                                |
+|:----------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [AWS account](https://aws.amazon.com/account)             | You need to have an AWS account with permissions to create lambda and IAM resources.                                                                       |
+| [Amazon developer account](https://developer.amazon.com)	 | You need to have a Amazon developer account to create and deploy Alexa skills. You should associate with the email you have registered your Alexa devices. |
+| [Redis Cloud](https://redis.io/try-free)                  | You need to have an account with Redis Cloud to create the required database.                                                                              |
 
 ## 📋 Software requirements
 
