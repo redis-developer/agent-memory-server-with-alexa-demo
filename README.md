@@ -48,7 +48,7 @@ export REDISCLOUD_ACCESS_KEY=<THIS_IS_GOING_TO_BE_YOUR_API_ACCOUNT_KEY>
 export REDISCLOUD_SECRET_KEY=<THIS_IS_GOING_TO_BE_ONE_API_USER_KEY>
  ```
 
-## Terraform configuration
+### Terraform configuration
 
 During deployment, resources will be created by Terraform based on the variables you provide. You need to create a variables file with the correct information so the deployment can happen successfully.
 
@@ -63,7 +63,7 @@ cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/te
 - `essentials_plan_cloud_region`: The region where you want your Redis database to be hosted (e.g., "us-east-1").
 - `openai_api_key`: The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories.
 
-## Installation & Deployment
+## ⚙️ Installation & Deployment
 
 Once all prerequisites and configuration are in place, installation is a single step:
 
@@ -71,10 +71,7 @@ Once all prerequisites and configuration are in place, installation is a single 
 ./deploy.sh
 ```
 
-- This script will build the Lambda, deploy infrastructure with Terraform, upload the Lambda code, and update the Alexa skill using ASK CLI.
-- Follow any prompts or error messages for troubleshooting.
-
-## Teardown
+## 🪓 Teardown
 
 To remove all deployed resources and the skill:
 
