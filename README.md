@@ -57,11 +57,14 @@ During deployment, resources will be created by Terraform based on the variables
 cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
 ```
 2. Edit `infrastructure/terraform/terraform.tfvars` to set the following variables:
-- `payment_card_type`: The credit card associated with your Redis Cloud account (e.g., "Visa").
-- `payment_card_last_four`: The last four digits of the credit card associated with your Redis Cloud account (e.g., "1234").
-- `essentials_plan_cloud_provider`: The cloud provider where you want your Redis database to be hosted (e.g., "AWS").
-- `essentials_plan_cloud_region`: The region where you want your Redis database to be hosted (e.g., "us-east-1").
-- `openai_api_key`: The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories.
+
+| Variable             | Description  |
+|:---------------------| :----------- |
+| payment_card_type    | The credit card associated with your Redis Cloud account (e.g., "Visa"). |
+| payment_card_last_four	                    | The last four digits of the credit card associated with your Redis Cloud account (e.g., "1234"). |
+| essentials_plan_cloud_provider      | The cloud provider where you want your Redis database to be hosted (e.g., "AWS"). |
+| essentials_plan_cloud_region | The region where you want your Redis database to be hosted (e.g., "us-east-1"). |
+| openai_api_key | The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories. |
 
 ## ⚙️ Installation & Deployment
 
@@ -79,7 +82,7 @@ To remove all deployed resources and the skill:
 ./undeploy.sh
 ```
 
-## Project Structure
+## 📁 Project Structure
 ```
 my-jarvis-alexa-skill/
 ├── lambda/                  # Java source code for the Alexa skill (AWS Lambda)
@@ -94,17 +97,11 @@ my-jarvis-alexa-skill/
 └── README.md                # This file
 ```
 
-## Usage
+## 🗣️ Usage
 Invoke your Alexa device with the invocation name you set (e.g., "Alexa, open My Jarvis"). Try commands like:
 - "Tell my javis to remember that my favorite color is blue."
 - "Ask my jarvis to recall What is my favorite color?"
 - "Tell my jarvis to Forget my favorite color."
 
-## Contributing
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
-## License
+## 📄 License
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-## Support
-For questions or support, please open an issue in this repository.
