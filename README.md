@@ -104,10 +104,11 @@ my-jarvis-alexa-skill/
 ```
 
 ## 🗣️ Usage
-Invoke your Alexa device with the invocation name you set (e.g., "Alexa, open My Jarvis"). Try commands like:
-- "Tell my javis to remember that my favorite color is blue."
-- "Ask my jarvis to recall What is my favorite color?"
-- "Tell my jarvis to Forget my favorite color."
+Invoke your Alexa device with the invocation 'my jarvis' and try commands like:
+- "Alexa, tell my javis to remember that my favorite programming language is Java."
+- "Alexa, ask my jarvis to recall if Java is my favorite programming language."
+- "Alexa, tell my jarvis to remember I have a doctor appointment next Monday at 10 AM."
+- "Alexa, ask my jarvis to suggest what should I do for my birthday party."
 
 ## 📄 License
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
