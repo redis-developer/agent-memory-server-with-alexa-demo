@@ -6,12 +6,16 @@ Amazon Alexa is arguably one of the most popular virtual assistant devices avail
 
 This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa/alexa-skills-kit) using [Java](https://www.java.com/en). The behavior of the skill is deployed as an [AWS Lambda](https://aws.amazon.com/lambda) function, which in turn manages memories using the [Redis Agent Memory Server](https://redis.github.io/agent-memory-server). The build and deployment of the Alexa skill is fully automated using Bash scripts, Terraform, and the ASK CLI.
 
-## Features
-- Conversational Alexa skill with context retention
-- Memory recall and forget functionality
-- Integration with a Redis-backed working memory
-- Knowledge base querying via external API
-- Infrastructure as code using Terraform for AWS resources
+## 🧩 Account requirements
+- [AWS account](https://aws.amazon.com/account) with permissions to create Lambda and IAM resources
+- [Amazon developer account](https://developer.amazon.com) to create new Alexa skills from scratch
+- [Redis Cloud account](https://redis.io/try-free) to create a Redis database for the memory server
+
+## 📋 Software requirements
+- Terraform: https://developer.hashicorp.com/terraform/install
+- ASK CLI: https://github.com/alexa/ask-cli
+- JQ: https://jqlang.org/
+- SED: https://formulae.brew.sh/formula/gnu-sed
 
 ## Prerequisites (Required Before Installation)
 
