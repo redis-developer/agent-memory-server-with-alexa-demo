@@ -61,7 +61,7 @@ public class RememberIntentHandler implements RequestHandler {
         {
             "answer": "Confirmation message to user",
             "suggest_reminder": boolean,
-            "reminder_topic": "topic or empty",
+            "reminder_topic": "topic",
             "schedule": "YYYY-MM-DDTHH:MM:SS or empty",
             "is_recurring": boolean,
             "frequency": "DAILY/WEEKLY or null",
@@ -69,7 +69,9 @@ public class RememberIntentHandler implements RequestHandler {
             "memory_stored": %b
         }
         
-        PS: important, no extra text, only the JSON.
+        PS: important, no extra text, only the JSON. Also, the reminder_topic should always
+        be filled if suggest_reminder=true, and it must contain a clear, concise topic. It
+        should not contain details about the schedule or recurrence.
         
         REMINDER DETECTION: Set suggest_reminder=true for:
         - Specific time: "at 10 AM", "at noon"

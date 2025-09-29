@@ -1,6 +1,6 @@
-# My Jarvis Alexa Skill
+# Adding memory capabilities to Amazon Alexa with Redis Agent Memory Server
 
-My Jarvis is a custom Alexa skill that brings conversational AI, memory recall, and knowledge base integration to Alexa devices. It leverages AWS Lambda, Redis, and Terraform-managed infrastructure, and is designed for easy deployment and management.
+Amazon Alexa is arguably one of the most popular virtual assistant devices available in many homes worldwide. It enables users to automate mundane tasks, such as setting timers, playing music, and making phone calls. It would be great if only one thing weren't true: it doesn't really remember anything. Whatever you speak with Alexa, it won't be used in future conversations as context for more elaborate, polished, and well-tailored answers. Repeating yourself with Alexa is a common occurrence. This repository changes the status quo by introducing a memory-enabled skill for Alexa, capable of reusing previous memories and providing a more contextual conversation with users, allowing them to use Alexa in a more impactful manner.
 
 ## Features
 - Conversational Alexa skill with context retention

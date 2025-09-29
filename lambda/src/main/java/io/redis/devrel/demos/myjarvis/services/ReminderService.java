@@ -35,6 +35,7 @@ public class ReminderService {
         var trigger = buildRecurringTrigger(reminderDetails.scheduleTime(), userTimeZone, frequency, byDays);
         var request = buildReminderRequest(reminderDetails.topic(), trigger);
 
+        logger.debug("Reminder request: {}", request);
         var response = reminderMgmtService.createReminder(request);
         logger.info("Created recurring reminder with token: {}", response.getAlertToken());
 
