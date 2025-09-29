@@ -56,7 +56,7 @@ During deployment, resources will be created by Terraform based on the variables
 ```sh
 cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
 ```
-2. Edit `infrastructure/terraform/terraform.tfvars` to set the following variables:
+2. Edit `infrastructure/terraform/terraform.tfvars` to set the following required variables:
 
 | Variable             | Description  |
 |:---------------------| :----------- |
@@ -66,6 +66,8 @@ cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/te
 | essentials_plan_cloud_region | The region where you want your Redis database to be hosted (e.g., "us-east-1"). |
 | openai_api_key | The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories. |
 
+You can leave the other variables as they are unless you want to customize them.
+
 ## ⚙️ Installation & Deployment
 
 Once all prerequisites and configuration are in place, installation is a single step:
@@ -73,6 +75,10 @@ Once all prerequisites and configuration are in place, installation is a single 
 ```sh
 ./deploy.sh
 ```
+
+Please note that when the script finishes executing, it will print several output values, including the endpoint of the agent memory server, the ARN of the Lambda function created, and an SSH command that you can use to verify the agent memory server. However, it may take several more minutes for the agent memory server to be reachable. Use the provided endpoint to verify that the agent memory server is operational. Alternatively, you can use the skill itself to check this by saying:
+
+"Alexa, ask my jarvis to check the memory server"
 
 ## 🪓 Teardown
 
