@@ -6,7 +6,7 @@ Amazon Alexa is arguably one of the most popular virtual assistant devices avail
 
 This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa/alexa-skills-kit) using [Java](https://www.java.com/en). The behavior of the skill is deployed as an [AWS Lambda](https://aws.amazon.com/lambda) function, which in turn manages memories using the [Redis Agent Memory Server](https://redis.github.io/agent-memory-server). The build and deployment of the Alexa skill is fully automated using Bash scripts, Terraform, and the ASK CLI.
 
-## 🧩 Account requirements
+## 🧑🏻‍💻 Account requirements
 - [AWS account](https://aws.amazon.com/account) with permissions to create Lambda and IAM resources
 - [Amazon developer account](https://developer.amazon.com) to create new Alexa skills from scratch
 - [Redis Cloud account](https://redis.io/try-free) to create a Redis database for the memory server
@@ -17,25 +17,34 @@ This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa
 - JQ: https://jqlang.org/
 - SED: https://formulae.brew.sh/formula/gnu-sed
 
-## Prerequisites (Required Before Installation)
+## ‍💻 Preparing for deployment
 
-**You must have the following installed and configured _before_ running the deployment script:**
+This repository provides scripts that automate the build, deployment, and undeployment of the Alexa skill, along with its required resources. Everything is fully automated, but it requires that you have your accounts configured correctly in the machine you will use for deployment.
 
-1. **AWS CLI**
-   - Install: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-   - Configure credentials: `aws configure` (must have access to deploy Lambda, IAM, etc.)
+### Preparing your AWS account
 
-2. **ASK CLI (Alexa Skills Kit CLI)**
-   - Install: https://developer.amazon.com/en-US/docs/alexa/smapi/ask-cli-command-reference.html#install
-   - Configure: `ask configure` (must be linked to your Amazon Developer account)
+This Alexa skill requires some backend resources to be created so it can function correctly. These resources will primarily be hosted on AWS, including Lambda functions, EC2 instances, and other services. You need to configure your AWS account locally before executing the deployment script.
 
-3. **Redis Cloud API Credentials**
-   - Obtain your Redis Cloud API key and secret from your Redis Cloud account.
-   - Export them as environment variables:
-     ```sh
-     export REDISCLOUD_ACCESS_KEY=your_account_api_key
-     export REDISCLOUD_SECRET_KEY=your_user_api_key
-     ```
+1. Install: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+2. Configure credentials: `aws configure` (must have access to deploy Lambda, IAM, etc.)
+
+### Preparing your Amazon developer account
+
+During deployment, a new skill called `My Jarvis` will be created for you. However, you need to ensure that your credentials are all set up with your ASK CLI. Follow these steps to configure your credentials.
+
+1. Install: https://developer.amazon.com/en-US/docs/alexa/smapi/ask-cli-command-reference.html#install
+2. Configure: `ask configure` (must be linked to your Amazon Developer account)
+
+### Preparing your Redis Cloud account
+
+This Alexa skill uses the Redis Agent Memory Server to provide memory capabilities. The memory server requires a Redis database to store and retrieve data. You must use Redis Cloud for this purpose. Follow these steps to make your Redis Cloud account accessible for Terraform.
+
+1. Obtain your Redis Cloud API access and secret key from your Redis Cloud account.
+2. Export them as environment variables:
+ ```sh
+export REDISCLOUD_ACCESS_KEY=<THIS_IS_GOING_TO_BE_YOUR_API_ACCOUNT_KEY>
+export REDISCLOUD_SECRET_KEY=<THIS_IS_GOING_TO_BE_ONE_API_USER_KEY>
+ ```
 
 4. **Terraform Variables File**
    - Copy the example file and edit it:
