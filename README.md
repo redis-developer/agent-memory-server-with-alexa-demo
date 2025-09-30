@@ -103,8 +103,7 @@ my-jarvis-alexa-skill/
 ├── lambda/                  # Java source code for the Alexa skill (AWS Lambda)
 │   ├── pom.xml              # Maven build file
 │   └── src/                 # Java source and resources
-├── infrastructure/          # Terraform scripts for AWS infrastructure
-│   └── terraform/
+├── infrastructure/          # Terraform code for AWS infrastructure
 ├── skill-package/           # Alexa skill manifest and assets
 ├── interactionModels/       # Alexa interaction models (intents, slots, etc.)
 ├── deploy.sh                # Deployment script
