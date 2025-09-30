@@ -1,6 +1,8 @@
 # Adding memory capabilities to Amazon Alexa with Redis Agent Memory Server
 
-Amazon Alexa is arguably one of the most popular virtual assistant devices available in many homes worldwide. It enables users to automate mundane tasks, such as setting timers, playing music, and making phone calls. It would be great if only one thing weren't true—it doesn't really remember anything. Whatever conversations you have with Alexa, it won't be used in future conversations as context for more elaborate, polished, and well-tailored answers. Therefore, repeating yourself with Alexa is a common occurrence. This repository changes everything by providing you with a memory-enabled skill for Amazon Alexa, capable of reusing previous memories and providing a more contextual conversation with users, allowing them to use Alexa in a more impactful manner.
+Amazon Alexa is arguably one of the most popular virtual assistant devices available in many homes worldwide. It enables users to automate mundane tasks, such as setting timers, playing music, and making phone calls. It would be great if only one thing weren't true—it doesn't really remember anything. Whatever conversations you have with Alexa, it won't be used in future conversations as context for more elaborate, polished, and well-tailored answers. Therefore, repeating yourself with Alexa is a common occurrence.
+
+This repository changes everything by providing you with a memory-enabled skill for Amazon Alexa, capable of reusing previous memories and providing a more contextual conversation with users, allowing them to use Alexa in a more impactful manner.
 
 ![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
 
@@ -8,11 +10,11 @@ This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa
 
 ## 🧑🏻‍💻 Account requirements
 
-| Account                                                   | Description                                                                                                                                                |
-|:----------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [AWS account](https://aws.amazon.com/account)             | You need to have an AWS account with permissions to create lambda and IAM resources.                                                                       |
-| [Amazon developer account](https://developer.amazon.com)	 | You need to have a Amazon developer account to create and deploy Alexa skills. You should associate with the email you have registered your Alexa devices. |
-| [Redis Cloud](https://redis.io/try-free)                  | You need to have an account with Redis Cloud to create the required database.                                                                              |
+| Account                                                   | Description                                                                                                                                                           |
+|:----------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [AWS account](https://aws.amazon.com/account)             | You need to have an AWS account with permissions to create resources like lambda functions, IAM roles, EC2 instances, security groups, and CloudWatch triggers.       |
+| [Amazon developer account](https://developer.amazon.com)	 | You need to have a Amazon developer account to create and deploy Alexa skills. You must associate this account with the email you have registered your Alexa devices. |
+| [Redis Cloud](https://redis.io/try-free)                  | You need to have an account with Redis Cloud to create a database. This database is required as the persistent store for the Redis Agent Memory Server.               |
 
 ## 📋 Software requirements
 
