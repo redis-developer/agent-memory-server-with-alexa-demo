@@ -2,7 +2,7 @@
 
 ## Overview
 ![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
-This demo demonstrates how Redis Agent Memory Server can extend Amazon Alexa with long-term conversational memory. Built using Java, AWS Lambda, and Redis Cloud, it enables Alexa to recall past conversations and deliver contextual, intelligent responses. This demo showcases how Redis can act as a memory layer for AI assistants, enriching the natural language experience through state persistence and fast retrieval.
+This demo demonstrates how [Redis Agent Memory Server](https://redis.github.io/agent-memory-server) can extend Amazon Alexa with conversational memory. Built using Java, AWS Lambda, and Redis Cloud, it enables Alexa to recall past conversations and deliver contextual, intelligent responses. This demo showcases how Redis can act as a memory layer for AI assistants, enriching the natural language experience through state persistence and fast retrieval.
 
 ## Table of Contents
 - [Demo Objectives](#demo-objectives)
