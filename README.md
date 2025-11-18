@@ -1,122 +1,134 @@
-# Adding memory capabilities to Amazon Alexa with Redis Agent Memory Server
+# Agent Memory Server with Alexa Demo
 
-Amazon Alexa is arguably one of the most popular virtual assistant devices available in many homes worldwide. It enables users to automate mundane tasks, such as setting timers, playing music, and making phone calls. It would be great if only one thing weren't true—it doesn't really remember anything. Whatever conversations you have with Alexa, it won't be used in future conversations as context for more elaborate, polished, and well-tailored answers. Therefore, repeating yourself with Alexa is a common occurrence.
-
-This repository changes everything by providing you with a memory-enabled skill for Amazon Alexa, capable of reusing previous memories and providing a more contextual conversation with users, allowing them to use Alexa in a more impactful manner.
-
+## Overview
 ![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
+This demo demonstrates how Redis Agent Memory Server can extend Amazon Alexa with long-term conversational memory. Built using Java, AWS Lambda, and Redis Cloud, it enables Alexa to recall past conversations and deliver contextual, intelligent responses. This demo showcases how Redis can act as a memory layer for AI assistants, enriching the natural language experience through state persistence and fast retrieval.
 
-This is implemented as an [Alexa skill](https://developer.amazon.com/en-US/alexa/alexa-skills-kit) using [Java](https://www.java.com/en). The behavior of the skill is deployed as an [AWS Lambda](https://aws.amazon.com/lambda) function, which in turn manages memories using the [Redis Agent Memory Server](https://redis.github.io/agent-memory-server). The build and deployment of the Alexa skill is fully automated using Bash scripts, Terraform, and the ASK CLI.
+## Table of Contents
+- [Demo Objectives](#demo-objectives)
+- [Setup](#setup)
+- [Running the Demo](#running-the-demo)
+- [Slide Deck](#slide-deck)
+- [Architecture](#architecture)
+- [Known Issues](#known-issues)
+- [Resources](#resources)
+- [Maintainers](#maintainers)
+- [License](#license)
 
-## 🧑🏻‍💻 Account requirements
+## Demo Objectives
+- Demonstrate Redis as a memory persistence layer for conversational AI.
+- Show how to integrate Redis Agent Memory Server via REST API calls.
+- Automate Alexa skill deployment using Terraform, AWS Lambda, and the ASK CLI.
+- Illustrate how Redis Cloud can support scalable AI use cases.
+- Demonstrate how to implement context engineering with LangChain4J.
 
-| Account                                                   | Description                                                                                                                                                           |
-|:----------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [AWS account](https://aws.amazon.com/account)             | You need to have an AWS account with permissions to create resources like lambda functions, IAM roles, EC2 instances, security groups, and CloudWatch triggers.       |
-| [Amazon developer account](https://developer.amazon.com)	 | You need to have a Amazon developer account to create and deploy Alexa skills. You must associate this account with the email you have registered your Alexa devices. |
-| [Redis Cloud](https://redis.io/try-free)                  | You need to have an account with Redis Cloud to create a database. This database is required as the persistent store for the Redis Agent Memory Server.               |
+## Setup
 
-## 📋 Software requirements
+### Dependencies
+- [Java 21+](https://www.oracle.com/java/technologies/downloads)
+- [Maven 3.9+](https://maven.apache.org/install.html)
+- [Terraform](https://developer.hashicorp.com/terraform/install)
+- [AWS CLI](https://github.com/aws/aws-cli)
+- [ASK CLI](https://github.com/alexa/ask-cli)
+- [JQ](https://jqlang.org/)
+- [SED](https://formulae.brew.sh/formula/gnu-sed)
 
-| Software                                                                                              | Description                                                                                 |
-|:------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------|
-| [Java 21+](https://www.oracle.com/java/technologies/downloads)                                        | Since the Lambda function is implemented in Java, you need JDK 21+ to compile and build it. |
-| [Maven 3.9+](https://maven.apache.org/install.html)	                                                  | Maven is required to manage the dependencies and package the JAR file with the code.        |
-| [Terraform](https://developer.hashicorp.com/terraform/install)                                        | Terraform is used to create and destroy resources on AWS, as well as on Redis Cloud.        |
-| [AWS CLI](https://github.com/aws/aws-cli)                                                             | You need to have the AWS CLI installed locally to configure your AWS credentials.           |
-| [ASK CLI](https://github.com/alexa/ask-cli)                                                           | You need to have the ASK CLI installed locally to package and build your the skill.         |
-| [JQ](https://jqlang.org/)                                                                             | JSON files are parsed during deployment, and JQ is used for that specific task.             |
-| [SED](https://formulae.brew.sh/formula/gnu-sed)                                                       | SED is used in the bash scripts to find and replace variables in different files.           |
+### Account Requirements
+| Account | Description |
+|:--|:--|
+| [AWS account](https://aws.amazon.com/account) | Required to create Lambda, IAM, EC2, and CloudWatch resources. |
+| [Amazon developer account](https://developer.amazon.com) | Needed to register and deploy Alexa skills. |
+| [Redis Cloud](https://redis.io/try-free) | Hosts the Redis database used by the Redis Agent Memory Server. |
 
-## ‍💻 Preparing for deployment
+### Configuration
 
-This repository provides scripts that automate the build, deployment, and undeployment of the Alexa skill, along with its required resources. Everything is fully automated, but it requires that you have your accounts configured correctly in the machine you will use for deployment.
+#### AWS Setup
+1. Install the AWS CLI: [Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+2. Configure your credentials:
+   ```sh
+   aws configure
+   ```
 
-### Preparing your AWS account
+#### Amazon Developer Account
+1. Install the ASK CLI: [Installation Guide](https://developer.amazon.com/en-US/docs/alexa/smapi/ask-cli-command-reference.html#install)
+2. Configure your credentials:
+   ```sh
+   ask configure
+   ```
 
-This Alexa skill requires some backend resources to be created so it can function correctly. These resources will primarily be hosted on AWS, including Lambda functions, EC2 instances, and other services. You need to configure your AWS account locally before executing the deployment script.
-
-1. Install: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-2. Configure credentials: `aws configure` (must have access to deploy Lambda, IAM, etc.)
-
-### Preparing your Amazon developer account
-
-During deployment, a new skill called `My Jarvis` will be created for you. However, you need to ensure that your credentials are all set up with your ASK CLI. Follow these steps to configure your credentials.
-
-1. Install: https://developer.amazon.com/en-US/docs/alexa/smapi/ask-cli-command-reference.html#install
-2. Configure: `ask configure` (must be linked to your Amazon Developer account)
-
-### Preparing your Redis Cloud account
-
-This Alexa skill uses the Redis Agent Memory Server to provide memory capabilities. The memory server requires a Redis database to store and retrieve data. You must use Redis Cloud for this purpose. Follow these steps to make your Redis Cloud account accessible for Terraform.
-
-1. Obtain your Redis Cloud API access and secret key from your Redis Cloud account.
+#### Redis Cloud
+1. Retrieve your API access and secret keys from Redis Cloud.
 2. Export them as environment variables:
- ```sh
-export REDISCLOUD_ACCESS_KEY=<THIS_IS_GOING_TO_BE_YOUR_API_ACCOUNT_KEY>
-export REDISCLOUD_SECRET_KEY=<THIS_IS_GOING_TO_BE_ONE_API_USER_KEY>
- ```
+   ```sh
+   export REDISCLOUD_ACCESS_KEY=<YOUR_API_ACCOUNT_KEY>
+   export REDISCLOUD_SECRET_KEY=<YOUR_API_USER_KEY>
+   ```
 
-### Terraform configuration
+#### Terraform Configuration
+1. Create your variables file:
+   ```sh
+   cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
+   ```
+2. Edit `infrastructure/terraform/terraform.tfvars` with your information:
 
-During deployment, resources will be created by Terraform based on the variables you provide. You need to create a variables file with the correct information so the deployment can happen successfully.
+| Variable | Description |
+|:--|:--|
+| `payment_card_type` | Credit card type linked to Redis Cloud (e.g., “Visa”). |
+| `payment_card_last_four` | Last four digits of your card (e.g., “1234”). |
+| `essentials_plan_cloud_provider` | Cloud provider for Redis Cloud (e.g., “AWS”). |
+| `essentials_plan_cloud_region` | Region for hosting Redis (e.g., “us-east-1”). |
+| `openai_api_key` | API key used by the Alexa skill and Agent Memory Server. |
 
-1. Create a Terraform variables file by copying the example provided:
-```sh
-cp infrastructure/terraform/terraform.tfvars.example infrastructure/terraform/terraform.tfvars
-```
-2. Edit `infrastructure/terraform/terraform.tfvars` to set the following required variables:
-
-| Variable             | Description  |
-|:---------------------| :----------- |
-| payment_card_type    | The credit card associated with your Redis Cloud account (e.g., "Visa"). |
-| payment_card_last_four	                    | The last four digits of the credit card associated with your Redis Cloud account (e.g., "1234"). |
-| essentials_plan_cloud_provider      | The cloud provider where you want your Redis database to be hosted (e.g., "AWS"). |
-| essentials_plan_cloud_region | The region where you want your Redis database to be hosted (e.g., "us-east-1"). |
-| openai_api_key | The OpenAI API key used by the Alexa skill to produce answers and the Agent Memory Server to manage memories. |
-
-You can leave the other variables as they are unless you want to customize them.
-
-## ⚙️ Installation & Deployment
-
-Once all prerequisites and configuration are in place, installation is a single step:
-
+#### Installation & Deployment
+Once configured, deploy everything using:
 ```sh
 ./deploy.sh
 ```
 
-Please note that when the script finishes executing, it will print several output values, including the endpoint of the agent memory server, the ARN of the Lambda function created, and an SSH command that you can use to verify the agent memory server. However, it may take several more minutes for the agent memory server to be reachable. Use the provided endpoint to verify that the agent memory server is operational. Alternatively, you can use the skill itself to check this by saying:
+When the deployment completes, note the output values including the Lambda ARN, Redis Agent Memory Server endpoint, and SSH command for validation.  
+You can verify if the Agent Memory Server is operational by saying:
 
-"Alexa, ask my jarvis to check the memory server"
+> “Alexa, ask my jarvis to check the memory server.”
 
-## 🪓 Teardown
+## Running the Demo
 
-To remove all deployed resources and the skill:
-
-```sh
-./undeploy.sh
-```
-
-## 📁 Project Structure
-```
-my-jarvis-alexa-skill/
-├── lambda/                  # Java source code for the Alexa skill (AWS Lambda)
-│   ├── pom.xml              # Maven build file
-│   └── src/                 # Java source and resources
-├── infrastructure/          # Terraform code for AWS infrastructure
-├── skill-package/           # Alexa skill manifest and assets
-├── interactionModels/       # Alexa interaction models (intents, slots, etc.)
-├── deploy.sh                # Deployment script
-├── undeploy.sh              # Teardown script
-└── README.md                # This file
-```
-
-## 🗣️ Usage
+### 🗣️ Usage
 Invoke your Alexa device with the invocation 'my jarvis' and try commands like:
 - "Alexa, tell my javis to remember that my favorite programming language is Java."
 - "Alexa, ask my jarvis to recall if Java is my favorite programming language."
 - "Alexa, tell my jarvis to remember I have a doctor appointment next Monday at 10 AM."
 - "Alexa, ask my jarvis to suggest what should I do for my birthday party."
 
-## 📄 License
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+### Teardown
+To remove all deployed resources:
+```sh
+./undeploy.sh
+```
+
+## Slide Deck
+📑 [Agent Memory Server with Alexa Presentation](./slides/agent-memory-server-with-alexa-demo.pdf)    
+Covers demo goals, motivations for a memory layer, and architecture overview.
+
+## Architecture
+![Skill Handler Implementation](./assets/skill-handler-impl.png)
+This architecture uses an Alexa skill written in Java and hosted as an AWS Lambda function. At the code of the Lambda function, it implements a stream handler that processes user requests and responses using the Agent Memory Server as memory storage.
+
+![Chat Assistant Service](./assets/chat-assistant-service.png)
+As part of the stream handler implementation, it uses a Chat Assistant Service that leverages LangChain4J to manage interactions with the Agent Memory Server. This service implements context engineering, ensuring that conversations are enriched with relevant historical data stored in Redis. OpenAI is the LLM used to process and generate responses.
+
+## Known Issues
+- Initial Agent Memory Server boot-up may take several minutes before becoming reachable.
+- Alexa Developer Console may require manual linking if credentials are not fully synchronized.
+
+## Resources
+- [Redis Agent Memory Server](https://redis.github.io/agent-memory-server)
+- [Redis Cloud](https://redis.io/try-free)
+- [AWS Lambda Documentation](https://docs.aws.amazon.com/lambda)
+- [Amazon Alexa Skills Kit](https://developer.amazon.com/en-US/alexa/alexa-skills-kit)
+
+## Maintainers
+**Maintainers:**
+- Ricardo Ferreira — [@riferrei](https://github.com/riferrei)
+
+## License
+This project is licensed under the [MIT License](./LICENSE).
