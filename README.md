@@ -50,14 +50,14 @@ This demo demonstrates how [Redis Agent Memory Server](https://redis.github.io/a
    ```
 
 #### Amazon Developer Account
-1. Install the ASK CLI: [Installation Guide](https://developer.amazon.com/en-US/docs/alexa/smapi/ask-cli-command-reference.html#install)
+1. Install the ASK CLI: [Installation Guide](https://developer.amazon.com/en-US/docs/alexa/smapi/quick-start-alexa-skills-kit-command-line-interface.html)
 2. Configure your credentials:
    ```sh
    ask configure
    ```
 
 #### Redis Cloud
-1. Retrieve your API access and secret keys from Redis Cloud.
+1. [Enable your APIs from Redis Cloud](https://redis.io/docs/latest/operate/rc/api/get-started/enable-the-api/).
 2. Export them as environment variables:
    ```sh
    export REDISCLOUD_ACCESS_KEY=<YOUR_API_ACCOUNT_KEY>
@@ -85,7 +85,8 @@ Once configured, deploy everything using:
 ./deploy.sh
 ```
 
-When the deployment completes, note the output values including the Lambda ARN, Redis Agent Memory Server endpoint, and SSH command for validation.  
+When the deployment completes, note the output values including the Lambda ARN, Redis Agent Memory Server endpoint, and SSH command for validation.
+
 You can verify if the Agent Memory Server is operational by saying:
 
 > “Alexa, ask my jarvis to check the memory server.”
