@@ -97,7 +97,6 @@ Once the deployment is complete, you can interact with your Alexa skill named **
 ![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
 
 ### 🗣️ Examples of interactions
-Invoke your Alexa device with the invocation 'my jarvis' and try commands like:
 - "Alexa, tell my javis to remember that my favorite programming language is Java."
 - "Alexa, ask my jarvis to recall if Java is my favorite programming language."
 - "Alexa, tell my jarvis to remember I have a doctor appointment next Monday at 10 AM."
