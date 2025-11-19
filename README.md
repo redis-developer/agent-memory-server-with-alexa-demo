@@ -92,7 +92,7 @@ You can verify if the Agent Memory Server is operational by saying:
 
 ## Running the Demo
 
-Once the deployment is complete, you can interact with your Alexa skill named "my jarvis".
+Once the deployment is complete, you can interact with your Alexa skill named **my jarvis**.
 
 ![my-jarvis-interaction.png](images/my-jarvis-interaction.png)
 
