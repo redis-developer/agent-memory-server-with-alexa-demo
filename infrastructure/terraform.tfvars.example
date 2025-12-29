@@ -1,5 +1,6 @@
-application_prefix = "my-jarvis"
+application_prefix = "ams-with-alexa-demo"
 
+database_predefined            = false
 subscription_name              = "redisdb"
 database_name                  = "redisdb"
 payment_card_type              = "Visa"

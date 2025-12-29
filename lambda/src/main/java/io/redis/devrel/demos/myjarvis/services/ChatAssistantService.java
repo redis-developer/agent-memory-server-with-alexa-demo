@@ -88,7 +88,7 @@ public class ChatAssistantService {
                 knowledgeBaseRetriever, "general knowledge base with facts"
         );
 
-        // This router make sure to only query the retrievers that are relevat
+        // This router make sure to only query the retrievers that are relevant
         // to the user query. This is more efficient in terms of context size
         LanguageModelQueryRouter router = LanguageModelQueryRouter.builder()
                 .chatModel(chatModel)

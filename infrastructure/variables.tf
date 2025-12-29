@@ -3,6 +3,12 @@ variable "application_prefix" {
   type        = string
 }
 
+variable "database_predefined" {
+  description = "Whether to use a predefined Redis database"
+  type        = bool
+  default     = false
+}
+
 variable "subscription_name" {
   description = "Name of the Redis subscription"
   type        = string
