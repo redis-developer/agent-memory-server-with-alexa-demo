@@ -5,8 +5,10 @@ import com.amazon.ask.SkillStreamHandler;
 import com.amazon.ask.Skills;
 import dev.langchain4j.data.document.DocumentParser;
 import dev.langchain4j.data.document.parser.apache.pdfbox.ApachePdfBoxDocumentParser;
+import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import io.redis.devrel.demos.myjarvis.handlers.*;
 import io.redis.devrel.demos.myjarvis.helpers.UserDoesNotExistExceptionHandler;
 import io.redis.devrel.demos.myjarvis.helpers.UserValidationInterceptor;
@@ -25,6 +27,7 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
 
     // LangChain4j components
     private static final DocumentParser documentParser = new ApachePdfBoxDocumentParser(true);
+    private static final TokenCountEstimator tokenCountEstimator = new OpenAiTokenCountEstimator(OPENAI_MODEL_NAME);
     private static final ChatModel chatModel = OpenAiChatModel.builder()
             .apiKey(OPENAI_API_KEY)
             .modelName(OPENAI_MODEL_NAME)
@@ -43,7 +46,7 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
     private static final ChatAssistantService chatAssistantService =
             new ChatAssistantService(
                     List.of(dateTimeTool, agentMemoryServerTool),
-                    chatModel, memoryService);
+                    tokenCountEstimator, chatModel, memoryService);
 
     private static Skill getSkill() {
         return Skills.standard()

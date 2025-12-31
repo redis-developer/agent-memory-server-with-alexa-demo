@@ -37,12 +37,13 @@ public class RememberIntentHandler implements RequestHandler {
         
         Also, make sure to:
         
-        1. Only use the context that is relevant to the current query. Don't over do it.
-        2. If the user from the context matches the current user, they're the same person.
-        3. Don't fabricate answers. Stick with the facts and knowledge from the context.
-        4. If the question is not about general topics, then answer based on data you know. 
-        5. Keep your answer concise with two sentences top.
-        6. Use gender-neutral language - avoid terms like 'sir' or 'madam'.
+        1. Your answer must be in JSON format as specified below.
+        2. Only use the context that is relevant to the current query. Don't over do it.
+        3. If the user from the context matches the current user, they're the same person.
+        4. Don't fabricate answers. Stick with the facts and knowledge from the context.
+        5. If the question is not about general topics, then answer based on data you know. 
+        6. Keep your answer concise with two sentences top.
+        7. Use gender-neutral language - avoid terms like 'sir' or 'madam'.
         
         CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
@@ -57,7 +58,7 @@ public class RememberIntentHandler implements RequestHandler {
         1. Store confirmation message
         2. Whether it needs a reminder and its details
         
-        Your answer should return this JSON:
+        Your answer MUST return this JSON:
         {
             "answer": "Confirmation message to user",
             "suggest_reminder": boolean,

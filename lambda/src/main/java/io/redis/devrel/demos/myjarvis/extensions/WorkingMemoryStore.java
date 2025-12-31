@@ -231,7 +231,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             return this;
         }
 
-        public Builder withSystemMessages(boolean value) {
+        public Builder withStoreSystemMessages(boolean value) {
             this.storeSystemMessages = Optional.of(value);
             return this;
         }

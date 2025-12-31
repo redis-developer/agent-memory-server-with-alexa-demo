@@ -33,16 +33,6 @@ public enum Constants {
     public static final String OPENAI_CHAT_MAX_TOKENS = System.getenv("OPENAI_CHAT_MAX_TOKENS");
     public static final String KNOWLEDGE_BASE_BUCKET_NAME = System.getenv("KNOWLEDGE_BASE_BUCKET_NAME");
 
-    public static final String CHAT_MEMORY_MAX_CACHE_SIZE =
-            (System.getenv("CHAT_MEMORY_MAX_CACHE_SIZE") == null ||
-                    System.getenv("CHAT_MEMORY_MAX_CACHE_SIZE").isEmpty())
-                    ? String.valueOf(100) : System.getenv("CHAT_MEMORY_MAX_CACHE_SIZE");
-
-    public static final String CHAT_MEMORY_CACHE_TTL_MINUTES =
-            (System.getenv("CHAT_MEMORY_CACHE_TTL_MINUTES") == null ||
-                    System.getenv("CHAT_MEMORY_CACHE_TTL_MINUTES").isEmpty())
-                    ? String.valueOf(5) : System.getenv("CHAT_MEMORY_CACHE_TTL_MINUTES");
-
     public static final String USER_MEMORIES_SEARCH_LIMIT =
             (System.getenv("USER_MEMORIES_SEARCH_LIMIT") == null ||
                     System.getenv("USER_MEMORIES_SEARCH_LIMIT").isEmpty())
