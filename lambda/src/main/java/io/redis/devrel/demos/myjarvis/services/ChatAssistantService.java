@@ -30,27 +30,25 @@ public class ChatAssistantService {
     private final ChatModel chatModel;
     private final MemoryService memoryService;
 
-    private final ChatAssistant basicAssistant;
+    private final BasicChatAssistant basicChatAssistant;
     private final ContentRetriever knowledgeBaseRetriever;
 
-    public ChatAssistantService(List<Object> tools,
-                                TokenCountEstimator tokenCountEstimator,
+    public ChatAssistantService(TokenCountEstimator tokenCountEstimator,
                                 ChatModel chatModel,
-                                MemoryService memoryService) {
-        this.tools = tools;
+                                MemoryService memoryService,
+                                List<Object> tools) {
         this.tokenCountEstimator = tokenCountEstimator;
         this.chatModel = chatModel;
         this.memoryService = memoryService;
+        this.tools = tools;
 
-        this.basicAssistant = createBasicAssistant();
+        this.basicChatAssistant = createBasicAssistant();
         this.knowledgeBaseRetriever = createKnowledgeBaseRetriever();
-
-        logger.info("ChatAssistantService singleton initialized with {} tools", tools.size());
     }
 
     public String processQueryWithoutContext(String systemPrompt, String query) {
         logger.debug("Processing query without context {}", query);
-        return basicAssistant.chat(systemPrompt, query);
+        return basicChatAssistant.chat(systemPrompt, query);
     }
 
     public String processQueryWithContext(String systemPrompt,
@@ -59,25 +57,24 @@ public class ChatAssistantService {
                                           String query) {
         logger.debug("Processing query with context for user: {}", userId);
 
-        ChatMemory chatMemory = getChatMemory(userId);
         RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
-        ChatAssistant contextualAssistant = createContextualAssistant(chatMemory, augmentor);
+        ContextualChatAssistant contextualChatAssistant = createContextualAssistant(userId, augmentor);
 
-        return contextualAssistant.chat(systemPrompt, userId, userName, query);
+        return contextualChatAssistant.chat(systemPrompt, userId, userName, query);
     }
 
-    private ChatAssistant createBasicAssistant() {
-        return AiServices.builder(ChatAssistant.class)
+    private BasicChatAssistant createBasicAssistant() {
+        return AiServices.builder(BasicChatAssistant.class)
                 .chatModel(chatModel)
                 .tools(tools)
                 .build();
     }
 
-    private ChatAssistant createContextualAssistant(ChatMemory memory,
-                                                    RetrievalAugmentor augmentor) {
-        return AiServices.builder(ChatAssistant.class)
+    private ContextualChatAssistant createContextualAssistant(String userId,
+                                                              RetrievalAugmentor augmentor) {
+        return AiServices.builder(ContextualChatAssistant.class)
                 .chatModel(chatModel)
-                .chatMemory(memory)
+                .chatMemoryProvider(memoryId -> getChatMemory(userId))
                 .retrievalAugmentor(augmentor)
                 .tools(tools)
                 .build();
@@ -96,7 +93,7 @@ public class ChatAssistantService {
         LanguageModelQueryRouter router = LanguageModelQueryRouter.builder()
                 .chatModel(chatModel)
                 .retrieverToDescription(retrievers)
-                .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.ROUTE_TO_ALL)
+                .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.DO_NOT_ROUTE)
                 .build();
 
         return DefaultRetrievalAugmentor.builder()

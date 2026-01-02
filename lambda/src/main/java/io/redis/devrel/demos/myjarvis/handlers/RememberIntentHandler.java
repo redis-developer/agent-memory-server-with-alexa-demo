@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redis.devrel.demos.myjarvis.helpers.HandlerHelper;
 import io.redis.devrel.demos.myjarvis.helpers.RequestContext;
-import io.redis.devrel.demos.myjarvis.services.MemoryService;
 import io.redis.devrel.demos.myjarvis.services.ChatAssistantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,16 @@ public class RememberIntentHandler implements RequestHandler {
         the J.A.R.V.I.S personality.
         
         As for your specific instructions, The user will ask you to remember memories the user 
-        will provide, which will be given to you via prompt.
+        will provide, which will be given to you via prompt. Use the tools available to create
+        the user memory.
+        
+        IMPORTANT: When calling createUserMemory, use EXACTLY these values:
+        - sessionId: Use the sessionId value provided in the context (starts with "amzn1.ask.session")
+        - userId: Use the userId value provided in the context (starts with "amzn1.ask.person")
+        - timezone: Use the timezone value provided in the context (e.g., "America/New_York")
+        - memory: The actual memory text the user wants to store
+        
+        DO NOT mix up these parameters or use generated timestamps for userId!        
         
         Also, make sure to:
         
@@ -67,7 +75,7 @@ public class RememberIntentHandler implements RequestHandler {
             "is_recurring": boolean,
             "frequency": "DAILY/WEEKLY or null",
             "by_days": ["MO"] or null,
-            "memory_stored": %b
+            "memory_stored": boolean
         }
         
         PS: important, no extra text, only the JSON. Also, the reminder_topic should always
@@ -98,12 +106,9 @@ public class RememberIntentHandler implements RequestHandler {
         DAY CODES: MO, TU, WE, TH, FR, SA, SU
         """;
 
-    private final MemoryService memoryService;
     private final ChatAssistantService chatAssistantService;
 
-    public RememberIntentHandler(MemoryService memoryService,
-                                 ChatAssistantService chatAssistantService) {
-        this.memoryService = memoryService;
+    public RememberIntentHandler(ChatAssistantService chatAssistantService) {
         this.chatAssistantService = chatAssistantService;
     }
 
@@ -122,12 +127,11 @@ public class RememberIntentHandler implements RequestHandler {
                     "I didn't catch what you wanted me to remember");
         }
 
-        var memoryStored = storeMemory(context, memory.get());
-        var aiResponse = processWithAI(context, memory.get(), memoryStored);
+        var aiResponse = processWithAI(context, memory.get());
 
         return aiResponse
                 .map(response -> buildResponseFromAI(handlerInput, response))
-                .orElseGet(() -> buildFallbackResponse(handlerInput, memoryStored));
+                .orElseGet(() -> buildFallbackResponse(handlerInput));
     }
 
     private Optional<String> extractMemoryText(HandlerInput handlerInput) {
@@ -141,28 +145,22 @@ public class RememberIntentHandler implements RequestHandler {
         }
     }
 
-    private boolean storeMemory(RequestContext context, String memory) {
+    private Optional<AnswerResponse> processWithAI(RequestContext context,
+                                                   String memory) {
         try {
-            var stored = memoryService.createUserMemory(
+            String query = String.format("""
+            User asked to store this memory: %s
+            - sessionId: %s
+            - userId: %s
+            - timezone: %s
+            """,
+                    memory,
                     context.sessionId(),
                     context.userId(),
-                    context.timezone(),
-                    memory
+                    context.timezone()
             );
-            logger.info("Memory stored: {} for user: {}", stored, context.userId());
-            return stored;
-        } catch (Exception e) {
-            logger.error("Failed to store memory", e);
-            return false;
-        }
-    }
 
-    private Optional<AnswerResponse> processWithAI(RequestContext context,
-                                                   String memory,
-                                                   boolean stored) {
-        try {
-            var query = String.format("User asked to store this memory: %s", memory);
-            var prompt = String.format(SYSTEM_PROMPT, context.timezone(), stored);
+            var prompt = String.format(SYSTEM_PROMPT, context.timezone());
 
             var response = chatAssistantService.processQueryWithContext(
                     prompt,
@@ -173,8 +171,8 @@ public class RememberIntentHandler implements RequestHandler {
 
             logger.info("AI response: {}", response);
             return parseResponse(response);
-        } catch (Exception e) {
-            logger.error("Error processing with AI", e);
+        } catch (Exception ex) {
+            logger.error("Error processing with AI", ex);
             return Optional.empty();
         }
     }
@@ -204,11 +202,8 @@ public class RememberIntentHandler implements RequestHandler {
         return HandlerHelper.buildAlexaResponse(handlerInput, speechText, true);
     }
 
-    private Optional<Response> buildFallbackResponse(HandlerInput input, boolean memoryStored) {
-        var speechText = memoryStored
-                ? "I've stored that in my memory banks."
-                : "I encountered an issue storing that memory.";
-
+    private Optional<Response> buildFallbackResponse(HandlerInput input) {
+        var speechText = "I'm sorry, I couldn't process your request to remember that. Please try again.";
         return buildSimpleResponse(input, speechText);
     }
 

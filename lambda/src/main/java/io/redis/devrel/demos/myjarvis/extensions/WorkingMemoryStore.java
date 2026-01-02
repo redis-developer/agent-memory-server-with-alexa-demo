@@ -106,6 +106,9 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             requestBody.put("session_id", memoryId.toString());
             requestBody.put("namespace", namespace);
             requestBody.put("ttl_seconds", timeToLiveInSeconds);
+            requestBody.put("long_term_memory_strategy",
+                    Map.of("strategy", "preferences",
+                            "config", Map.of()));
 
             String jsonPayload = objectMapper.writeValueAsString(requestBody);
 

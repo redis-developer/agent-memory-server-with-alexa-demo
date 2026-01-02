@@ -65,24 +65,42 @@ public class TokenLimitingChatMemory implements ChatMemory {
     }
 
     private void trimMessagesToFitTokenLimit() {
-        while (messages.size() > 1) { // Keep at least one message
-            int currentTokens = tokenCountEstimator.estimateTokenCountInMessages(messages);
-
-            if (currentTokens <= maxTokens) {
-                break;
-            }
-
-            // Remove the oldest message (but keep system messages if they're important)
+        while (messages.size() > 1 && tokenCountEstimator.estimateTokenCountInMessages(messages) > maxTokens) {
+            // Find the first non-SystemMessage to remove
+            int indexToRemove = -1;
             for (int i = 0; i < messages.size(); i++) {
-                if (!(messages.get(i) instanceof SystemMessage)) {
-                    ChatMessage removed = messages.remove(i);
+                ChatMessage message = messages.get(i);
+                if (!(message instanceof SystemMessage)) {
+                    // Check if this is an AiMessage with tool calls
+                    if (message instanceof AiMessage aiMessage && aiMessage.hasToolExecutionRequests()) {
+                        // Also need to remove the corresponding tool result message(s)
+                        // Find all tool result messages that follow this AI message
+                        List<Integer> toolResultIndices = new ArrayList<>();
+                        for (int j = i + 1; j < messages.size(); j++) {
+                            ChatMessage nextMsg = messages.get(j);
+                            if (nextMsg instanceof ToolExecutionResultMessage) {
+                                toolResultIndices.add(j);
+                            } else if (nextMsg instanceof UserMessage) {
+                                // Stop at the next user message (new turn)
+                                break;
+                            }
+                        }
+
+                        // Remove tool results first (in reverse order to maintain indices)
+                        for (int k = toolResultIndices.size() - 1; k >= 0; k--) {
+                            messages.remove((int) toolResultIndices.get(k));
+                        }
+                    }
+
+                    indexToRemove = i;
                     break;
                 }
             }
 
-            // If we only have system messages, remove the oldest one
-            if (currentTokens > maxTokens && messages.size() > 1) {
-                messages.remove(0);
+            if (indexToRemove >= 0) {
+                messages.remove(indexToRemove);
+            } else {
+                break;
             }
         }
     }

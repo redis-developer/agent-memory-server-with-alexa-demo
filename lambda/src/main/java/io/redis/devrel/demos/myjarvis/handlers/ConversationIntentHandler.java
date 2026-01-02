@@ -36,7 +36,7 @@ public class ConversationIntentHandler implements RequestHandler {
     
         1. Only use the context that is relevant to the current query. Don't over do it.
         2. If the user from the context matches the current user, they're the same person.
-        3. Don't fabricate answers. Stick with the facts and knowledge from the context.
+        3. Don't fabricate answers. Stick with the facts and memories from the context.
         4. If the question is not about general topics, then answer based on data you know. 
         5. Keep your answer concise with three sentences top. Avoid listing items and bullet points.
         6. Use gender-neutral language - avoid terms like 'sir' or 'madam'.

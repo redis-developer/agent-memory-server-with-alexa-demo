@@ -12,12 +12,13 @@ import dev.langchain4j.model.openai.OpenAiTokenCountEstimator;
 import io.redis.devrel.demos.myjarvis.handlers.*;
 import io.redis.devrel.demos.myjarvis.helpers.UserDoesNotExistExceptionHandler;
 import io.redis.devrel.demos.myjarvis.helpers.UserValidationInterceptor;
+import io.redis.devrel.demos.myjarvis.services.ChatAssistantService;
 import io.redis.devrel.demos.myjarvis.services.MemoryService;
 import io.redis.devrel.demos.myjarvis.services.ReminderService;
 import io.redis.devrel.demos.myjarvis.services.UserService;
-import io.redis.devrel.demos.myjarvis.services.ChatAssistantService;
 import io.redis.devrel.demos.myjarvis.tools.AgentMemoryServerTool;
 import io.redis.devrel.demos.myjarvis.tools.DateTimeTool;
+import io.redis.devrel.demos.myjarvis.tools.UserMemoryTool;
 
 import java.util.List;
 
@@ -35,42 +36,42 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
             .maxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
             .build();
 
-    // Tool components
-    private static final DateTimeTool dateTimeTool = new DateTimeTool();
-    private static final AgentMemoryServerTool agentMemoryServerTool = new AgentMemoryServerTool();
-
     // Service components
     private static final ReminderService reminderService = new ReminderService();
     private static final MemoryService memoryService = new MemoryService();
     private static final UserService userService = new UserService();
     private static final ChatAssistantService chatAssistantService =
             new ChatAssistantService(
-                    List.of(dateTimeTool, agentMemoryServerTool),
-                    tokenCountEstimator, chatModel, memoryService);
+                    tokenCountEstimator, chatModel, memoryService,
+                    List.of(
+                            new DateTimeTool(),
+                            new AgentMemoryServerTool(),
+                            new UserMemoryTool(memoryService))
+            );
+
+    public MyJarvisStreamHandler() {
+        super(getSkill());
+    }
 
     private static Skill getSkill() {
         return Skills.standard()
                 .addRequestInterceptor(new UserValidationInterceptor(userService))
                 .addExceptionHandler(new UserDoesNotExistExceptionHandler())
                 .addRequestHandlers(
-                    new YesIntentHandler(reminderService),
-                    new NoIntentHandler(),
-                    new LaunchRequestHandler(),
-                    new CancelAndStopIntentHandler(),
-                    new FallbackIntentHandler(),
-                    new HelpIntentHandler(),
-                    new UserIntroIntentHandler(userService, chatAssistantService),
-                    new RememberIntentHandler(memoryService, chatAssistantService),
-                    new RecallIntentHandler(chatAssistantService),
-                    new ForgetIntentHandler(memoryService, chatAssistantService),
-                    new ConversationIntentHandler(chatAssistantService),
-                    new AgentMemoryServerIntentHandler(chatAssistantService),
-                    new KnowledgeBaseIntentHandler(documentParser, memoryService)
+                        new YesIntentHandler(reminderService),
+                        new NoIntentHandler(),
+                        new LaunchRequestHandler(),
+                        new CancelAndStopIntentHandler(),
+                        new FallbackIntentHandler(),
+                        new HelpIntentHandler(),
+                        new UserIntroIntentHandler(userService, chatAssistantService),
+                        new RememberIntentHandler(chatAssistantService),
+                        new RecallIntentHandler(chatAssistantService),
+                        new ForgetIntentHandler(memoryService, chatAssistantService),
+                        new ConversationIntentHandler(chatAssistantService),
+                        new AgentMemoryServerIntentHandler(chatAssistantService),
+                        new KnowledgeBaseIntentHandler(documentParser, memoryService)
                 )
                 .build();
-    }
-
-    public MyJarvisStreamHandler() {
-        super(getSkill());
     }
 }
