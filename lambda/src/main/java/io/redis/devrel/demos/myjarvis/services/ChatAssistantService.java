@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_CHAT_MAX_TOKENS;
@@ -58,7 +59,7 @@ public class ChatAssistantService {
         logger.debug("Processing query with context for user: {}", userId);
 
         RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
-        ContextualChatAssistant contextualChatAssistant = createContextualAssistant(userId, augmentor);
+        ContextualChatAssistant contextualChatAssistant = createContextualAssistant(augmentor);
 
         return contextualChatAssistant.chat(systemPrompt, userId, userName, query);
     }
@@ -70,11 +71,10 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ContextualChatAssistant createContextualAssistant(String userId,
-                                                              RetrievalAugmentor augmentor) {
+    private ContextualChatAssistant createContextualAssistant(RetrievalAugmentor augmentor) {
         return AiServices.builder(ContextualChatAssistant.class)
                 .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> getChatMemory(userId))
+                .chatMemoryProvider(this::getChatMemory)
                 .retrievalAugmentor(augmentor)
                 .tools(tools)
                 .build();
@@ -115,14 +115,21 @@ public class ChatAssistantService {
                 .toList();
     }
 
-    private ChatMemory getChatMemory(String userId) {
-        logger.debug("Creating new WorkingMemoryChat for user: {}", userId);
+    private ChatMemory getChatMemory(Object memoryId) {
+        logger.debug("Creating new WorkingMemoryChat for user: {}", memoryId);
+
+        Objects.requireNonNull(memoryId, "memoryId cannot be null");
+        if (!(memoryId instanceof String sessionId)) {
+            logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
+            throw new IllegalArgumentException("memoryId must be a String");
+        }
+
         ChatMemoryStore chatMemoryStore = WorkingMemoryStore.builder()
                 .withAgentMemoryServerUrl(AGENT_MEMORY_SERVER_URL)
                 .build();
 
         return TokenLimitingChatMemory.builder()
-                .withSessionId(userId)
+                .withSessionId(sessionId)
                 .withChatMemoryStore(chatMemoryStore)
                 .withMaxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
                 .withTokenEstimator(tokenCountEstimator)

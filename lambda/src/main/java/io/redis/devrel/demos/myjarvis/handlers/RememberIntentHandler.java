@@ -104,6 +104,34 @@ public class RememberIntentHandler implements RequestHandler {
         - "in 4 hours" → is_recurring: false (ONE-TIME)
         
         DAY CODES: MO, TU, WE, TH, FR, SA, SU
+        
+        Few-shot examples:
+        
+        [Example 1]
+        User: "Remember I have a dentist appointment next Tuesday at 2 PM"
+        Response: {
+            "answer": "Certainly, I've noted your dentist appointment for next Tuesday at 2 PM.",
+            "suggest_reminder": true,
+            "reminder_topic": "Dentist appointment",
+            "schedule": "2024-01-09T14:00:00",
+            "is_recurring": false,
+            "frequency": null,
+            "by_days": null,
+            "memory_stored": true
+        }
+        
+        [Example 2]
+        User: "Remember to take vitamins every morning at 8 AM"
+        Response: {
+            "answer": "I've recorded your daily vitamin reminder for 8 AM.",
+            "suggest_reminder": true,
+            "reminder_topic": "Take vitamins",
+            "schedule": "2024-01-03T08:00:00",
+            "is_recurring": true,
+            "frequency": "DAILY",
+            "by_days": null,
+            "memory_stored": true
+        }        
         """;
 
     private final ChatAssistantService chatAssistantService;
