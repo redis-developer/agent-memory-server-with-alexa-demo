@@ -16,6 +16,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.determineRole;
+import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
+
 public class WorkingMemoryStore implements ChatMemoryStore {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkingMemoryStore.class);
@@ -177,43 +180,6 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         this.namespace = namespace;
     }
 
-    private String determineRole(ChatMessage message) {
-        return switch (message) {
-            case UserMessage userMessage -> "user";
-            case AiMessage aiMessage -> "assistant";
-            case SystemMessage systemMessage -> "system";
-            case ToolExecutionResultMessage toolExecutionResultMessage -> "tool";
-            default -> {
-                String className = message.getClass().getSimpleName().toLowerCase();
-                if (className.contains("user")) {
-                    yield "user";
-                } else if (className.contains("ai") || className.contains("assistant")) {
-                    yield "assistant";
-                } else if (className.contains("system")) {
-                    yield "system";
-                } else if (className.contains("tool")) {
-                    yield "tool";
-                } else {
-                    logger.warn("Unknown ChatMessage type: {}", message.getClass().getName());
-                    yield "unknown";
-                }
-            }
-        };
-    }
-
-    private String messageContent(ChatMessage message) {
-        return switch (message) {
-            case UserMessage userMessage -> userMessage.singleText();
-            case AiMessage aiMessage -> aiMessage.text();
-            case SystemMessage systemMessage -> systemMessage.text();
-            case ToolExecutionResultMessage toolExecutionResultMessage -> toolExecutionResultMessage.text();
-            default -> {
-                logger.warn("Unknown message type for content extraction: {}", message.getClass().getName());
-                yield message.toString();
-            }
-        };
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -224,22 +190,22 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         private Optional<Boolean> storeSystemMessages = Optional.empty();
         private Optional<String> namespace = Optional.empty();
 
-        public Builder withAgentMemoryServerUrl(String value) {
+        public Builder agentMemoryServerUrl(String value) {
             this.agentMemoryServerUrl = value;
             return this;
         }
 
-        public Builder withTimeToLiveInSeconds(long value) {
+        public Builder timeToLiveInSeconds(long value) {
             this.timeToLiveInSeconds = Optional.of(value);
             return this;
         }
 
-        public Builder withStoreSystemMessages(boolean value) {
+        public Builder storeSystemMessages(boolean value) {
             this.storeSystemMessages = Optional.of(value);
             return this;
         }
 
-        public Builder withNamespace(String value) {
+        public Builder namespace(String value) {
             this.namespace = Optional.of(value);
             return this;
         }

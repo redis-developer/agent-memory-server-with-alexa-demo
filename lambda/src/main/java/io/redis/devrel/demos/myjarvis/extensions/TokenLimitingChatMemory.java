@@ -115,22 +115,22 @@ public class TokenLimitingChatMemory implements ChatMemory {
         private TokenCountEstimator tokenCountEstimator;
         private int maxTokens = Integer.MAX_VALUE;
 
-        public Builder withId(String id) {
+        public Builder id(String id) {
             this.id = id;
             return this;
         }
 
-        public Builder withChatMemoryStore(ChatMemoryStore chatMemoryStore) {
+        public Builder chatMemoryStore(ChatMemoryStore chatMemoryStore) {
             this.chatMemoryStore = chatMemoryStore;
             return this;
         }
 
-        public Builder withTokenEstimator(TokenCountEstimator tokenCountEstimator) {
+        public Builder tokenEstimator(TokenCountEstimator tokenCountEstimator) {
             this.tokenCountEstimator = tokenCountEstimator;
             return this;
         }
 
-        public Builder withMaxTokens(int maxTokens) {
+        public Builder maxTokens(int maxTokens) {
             this.maxTokens = maxTokens;
             return this;
         }

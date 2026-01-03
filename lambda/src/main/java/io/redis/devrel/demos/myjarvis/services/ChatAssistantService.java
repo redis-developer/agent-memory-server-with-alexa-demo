@@ -1,5 +1,6 @@
 package io.redis.devrel.demos.myjarvis.services;
 
+import dev.langchain4j.data.message.*;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_CHAT_MAX_TOKENS;
+import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
 
 public class ChatAssistantService {
 
@@ -30,9 +32,6 @@ public class ChatAssistantService {
     private final ChatModel chatModel;
     private final MemoryService memoryService;
 
-    private final BasicChatAssistant basicChatAssistant;
-    private final ContentRetriever knowledgeBaseRetriever;
-
     public ChatAssistantService(TokenCountEstimator tokenCountEstimator,
                                 ChatModel chatModel,
                                 MemoryService memoryService,
@@ -41,13 +40,17 @@ public class ChatAssistantService {
         this.chatModel = chatModel;
         this.memoryService = memoryService;
         this.tools = tools;
-
-        this.basicChatAssistant = createBasicAssistant();
-        this.knowledgeBaseRetriever = createKnowledgeBaseRetriever();
     }
 
     public String processQueryWithoutContext(String systemPrompt, String query) {
         logger.debug("Processing query without context {}", query);
+
+        BasicChatAssistant basicChatAssistant =
+                AiServices.builder(BasicChatAssistant.class)
+                        .chatModel(chatModel)
+                        .tools(tools)
+                        .build();
+
         return basicChatAssistant.chat(systemPrompt, query);
     }
 
@@ -58,33 +61,23 @@ public class ChatAssistantService {
         logger.debug("Processing query with context for user: {}", userId);
 
         RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
-        ContextualChatAssistant contextualChatAssistant = createContextualAssistant(augmentor);
+
+        ContextualChatAssistant contextualChatAssistant =
+                AiServices.builder(ContextualChatAssistant.class)
+                        .chatModel(chatModel)
+                        .chatMemoryProvider(this::getChatMemory)
+                        .retrievalAugmentor(augmentor)
+                        .tools(tools)
+                        .build();
 
         return contextualChatAssistant.chat(systemPrompt, userId, userName, query);
     }
 
-    private BasicChatAssistant createBasicAssistant() {
-        return AiServices.builder(BasicChatAssistant.class)
-                .chatModel(chatModel)
-                .tools(tools)
-                .build();
-    }
-
-    private ContextualChatAssistant createContextualAssistant(RetrievalAugmentor augmentor) {
-        return AiServices.builder(ContextualChatAssistant.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(this::getChatMemory)
-                .retrievalAugmentor(augmentor)
-                .tools(tools)
-                .build();
-    }
-
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
-        ContentRetriever userMemoryRetriever = createUserMemoryRetriever(userId);
-
         Map<ContentRetriever, String> retrievers = Map.of(
-                userMemoryRetriever, "user specific long-term memories",
-                knowledgeBaseRetriever, "general knowledge base with facts"
+                getUserShortTermMemories(userId), "user specific short-term memories from recent conversations",
+                getUserLongTermMemories(userId), "user specific long-term memories, personal preferences and data",
+                getGeneralKnowledgeBase(), "not user specific general knowledge base with facts and data"
         );
 
         // This router make sure to only query the retrievers that are relevant
@@ -92,7 +85,7 @@ public class ChatAssistantService {
         LanguageModelQueryRouter router = LanguageModelQueryRouter.builder()
                 .chatModel(chatModel)
                 .retrieverToDescription(retrievers)
-                .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.DO_NOT_ROUTE)
+                .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.ROUTE_TO_ALL)
                 .build();
 
         return DefaultRetrievalAugmentor.builder()
@@ -100,14 +93,21 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ContentRetriever createUserMemoryRetriever(String userId) {
+    private ContentRetriever getUserShortTermMemories(String userId) {
+        return query -> getChatMemory(userId).messages()
+                .stream()
+                .map(msg -> Content.from(messageContent(msg)))
+                .toList();
+    }
+
+    private ContentRetriever getUserLongTermMemories(String userId) {
         return query -> memoryService.searchUserMemories(userId, query.text())
                 .stream()
                 .map(Content::from)
                 .toList();
     }
 
-    private ContentRetriever createKnowledgeBaseRetriever() {
+    private ContentRetriever getGeneralKnowledgeBase() {
         return query -> memoryService.searchKnowledgeBase(query.text())
                 .stream()
                 .map(Content::from)
@@ -121,14 +121,14 @@ public class ChatAssistantService {
         }
 
         ChatMemoryStore chatMemoryStore = WorkingMemoryStore.builder()
-                .withAgentMemoryServerUrl(AGENT_MEMORY_SERVER_URL)
+                .agentMemoryServerUrl(AGENT_MEMORY_SERVER_URL)
                 .build();
 
         return TokenLimitingChatMemory.builder()
-                .withId(id)
-                .withChatMemoryStore(chatMemoryStore)
-                .withMaxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
-                .withTokenEstimator(tokenCountEstimator)
+                .id(id)
+                .chatMemoryStore(chatMemoryStore)
+                .maxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
+                .tokenEstimator(tokenCountEstimator)
                 .build();
     }
 

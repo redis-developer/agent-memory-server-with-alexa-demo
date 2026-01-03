@@ -31,7 +31,7 @@ public class RecallIntentHandler implements RequestHandler {
         Leverage both the short-term (chat history) and long-term memories to provide accurate answers.
         Never respond with another question, as the user is likely asking for an opinion.
         Be thoughtful with your answers. Make sure to provide as many details as possible in the attempt
-        to be complete.
+        to be complete. Never store new user memories during this conversation.
         
         CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
