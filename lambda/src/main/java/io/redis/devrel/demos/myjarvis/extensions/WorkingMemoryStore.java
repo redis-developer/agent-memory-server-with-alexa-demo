@@ -27,7 +27,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
     private final String agentMemoryServerUrl;
     private long timeToLiveInSeconds = 300;
     private boolean storeSystemMessages = false;
-    private String namespace = "chat-messages";
+    private String namespace = "chat-memory";
 
     public WorkingMemoryStore(String agentMemoryServerUrl) {
         this.agentMemoryServerUrl = agentMemoryServerUrl;

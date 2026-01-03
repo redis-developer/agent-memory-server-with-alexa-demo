@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_CHAT_MAX_TOKENS;
@@ -116,10 +115,7 @@ public class ChatAssistantService {
     }
 
     private ChatMemory getChatMemory(Object memoryId) {
-        logger.debug("Creating new WorkingMemoryChat for user: {}", memoryId);
-
-        Objects.requireNonNull(memoryId, "memoryId cannot be null");
-        if (!(memoryId instanceof String sessionId)) {
+        if (!(memoryId instanceof String id)) {
             logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
             throw new IllegalArgumentException("memoryId must be a String");
         }
@@ -129,7 +125,7 @@ public class ChatAssistantService {
                 .build();
 
         return TokenLimitingChatMemory.builder()
-                .withSessionId(sessionId)
+                .withId(id)
                 .withChatMemoryStore(chatMemoryStore)
                 .withMaxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
                 .withTokenEstimator(tokenCountEstimator)

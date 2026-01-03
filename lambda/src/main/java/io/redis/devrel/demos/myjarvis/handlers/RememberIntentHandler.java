@@ -41,7 +41,9 @@ public class RememberIntentHandler implements RequestHandler {
         - timezone: Use the timezone value provided in the context (e.g., "America/New_York")
         - memory: The actual memory text the user wants to store
         
-        DO NOT mix up these parameters or use generated timestamps for userId!        
+        DO NOT mix up these parameters or use generated timestamps for userId!
+        
+        CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
         Also, make sure to:
         
@@ -52,8 +54,6 @@ public class RememberIntentHandler implements RequestHandler {
         5. If the question is not about general topics, then answer based on data you know. 
         6. Keep your answer concise with two sentences top.
         7. Use gender-neutral language - avoid terms like 'sir' or 'madam'.
-        
-        CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
         IMPORTANT DATE CALCULATION:
         When user says "Tuesday" or any weekday without "next":
@@ -173,28 +173,28 @@ public class RememberIntentHandler implements RequestHandler {
         }
     }
 
-    private Optional<AnswerResponse> processWithAI(RequestContext context,
+    private Optional<AnswerResponse> processWithAI(RequestContext requestContext,
                                                    String memory) {
         try {
-            String query = String.format("""
+            String question = String.format("""
             User asked to store this memory: %s
             - sessionId: %s
             - userId: %s
             - timezone: %s
             """,
                     memory,
-                    context.sessionId(),
-                    context.userId(),
-                    context.timezone()
+                    requestContext.sessionId(),
+                    requestContext.userId(),
+                    requestContext.timezone()
             );
 
-            var prompt = String.format(SYSTEM_PROMPT, context.timezone());
+            var systemPrompt = String.format(SYSTEM_PROMPT, requestContext.timezone());
 
             var response = chatAssistantService.processQueryWithContext(
-                    prompt,
-                    context.userId(),
-                    context.userName(),
-                    query
+                    systemPrompt,
+                    requestContext.userId(),
+                    requestContext.userName(),
+                    question
             );
 
             logger.info("AI response: {}", response);

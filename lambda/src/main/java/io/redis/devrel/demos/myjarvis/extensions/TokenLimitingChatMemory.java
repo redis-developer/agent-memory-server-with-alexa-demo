@@ -14,32 +14,32 @@ public class TokenLimitingChatMemory implements ChatMemory {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenLimitingChatMemory.class);
 
-    private final String sessionId;
+    private final String id;
     private final ChatMemoryStore chatMemoryStore;
     private final List<ChatMessage> messages;
     private final TokenCountEstimator tokenCountEstimator;
     private final int maxTokens;
 
-    public TokenLimitingChatMemory(String sessionId,
+    public TokenLimitingChatMemory(String id,
                                    ChatMemoryStore chatMemoryStore,
                                    TokenCountEstimator tokenCountEstimator,
                                    int maxTokens) {
-        this.sessionId = sessionId;
+        this.id = id;
         this.chatMemoryStore = chatMemoryStore;
         this.tokenCountEstimator = tokenCountEstimator;
         this.maxTokens = maxTokens;
 
         // Load existing messages
-        this.messages = new ArrayList<>(chatMemoryStore.getMessages(sessionId));
-        trimMessagesToFitTokenLimit();
+        this.messages = new ArrayList<>(chatMemoryStore.getMessages(id));
+        ensureCapacity();
 
         logger.debug("Initialized WorkingMemoryChat for session {} with {} messages",
-                sessionId, this.messages.size());
+                id, this.messages.size());
     }
 
     @Override
     public Object id() {
-        return sessionId;
+        return id;
     }
 
     @Override
@@ -49,8 +49,8 @@ public class TokenLimitingChatMemory implements ChatMemory {
         }
 
         messages.add(message);
-        trimMessagesToFitTokenLimit();
-        chatMemoryStore.updateMessages(sessionId, messages);
+        ensureCapacity();
+        chatMemoryStore.updateMessages(id, messages);
     }
 
     @Override
@@ -61,10 +61,10 @@ public class TokenLimitingChatMemory implements ChatMemory {
     @Override
     public void clear() {
         messages.clear();
-        chatMemoryStore.deleteMessages(sessionId);
+        chatMemoryStore.deleteMessages(id);
     }
 
-    private void trimMessagesToFitTokenLimit() {
+    private void ensureCapacity() {
         while (messages.size() > 1 && tokenCountEstimator.estimateTokenCountInMessages(messages) > maxTokens) {
             // Find the first non-SystemMessage to remove
             int indexToRemove = -1;
@@ -110,13 +110,13 @@ public class TokenLimitingChatMemory implements ChatMemory {
     }
 
     public static class Builder {
-        private String sessionId;
+        private String id;
         private ChatMemoryStore chatMemoryStore;
         private TokenCountEstimator tokenCountEstimator;
         private int maxTokens = Integer.MAX_VALUE;
 
-        public Builder withSessionId(String sessionId) {
-            this.sessionId = sessionId;
+        public Builder withId(String id) {
+            this.id = id;
             return this;
         }
 
@@ -137,7 +137,7 @@ public class TokenLimitingChatMemory implements ChatMemory {
 
         public TokenLimitingChatMemory build() {
             return new TokenLimitingChatMemory(
-                    sessionId, chatMemoryStore,
+                    id, chatMemoryStore,
                     tokenCountEstimator, maxTokens);
         }
     }
