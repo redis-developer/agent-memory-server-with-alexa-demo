@@ -28,11 +28,20 @@ public enum Constants {
 
     public static final String AGENT_MEMORY_SERVER_URL = System.getenv("AGENT_MEMORY_SERVER_URL");
     public static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
-    public static final String OPENAI_EMBEDDING_MODEL_NAME = System.getenv("OPENAI_EMBEDDING_MODEL_NAME");
     public static final String OPENAI_MODEL_NAME = System.getenv("OPENAI_MODEL_NAME");
     public static final String OPENAI_CHAT_TEMPERATURE = System.getenv("OPENAI_CHAT_TEMPERATURE");
     public static final String OPENAI_CHAT_MAX_TOKENS = System.getenv("OPENAI_CHAT_MAX_TOKENS");
     public static final String KNOWLEDGE_BASE_BUCKET_NAME = System.getenv("KNOWLEDGE_BASE_BUCKET_NAME");
+
+    public static final String MAX_SEGMENT_SIZE_IN_CHARS =
+            (System.getenv("MAX_SEGMENT_SIZE_IN_CHARS") == null ||
+                    System.getenv("MAX_SEGMENT_SIZE_IN_CHARS").isEmpty())
+                    ? String.valueOf(1000) : System.getenv("MAX_SEGMENT_SIZE_IN_CHARS");
+
+    public static final String MAX_SEGMENT_OVERLAP_IN_CHARS =
+            (System.getenv("MAX_SEGMENT_OVERLAP_IN_CHARS") == null ||
+                    System.getenv("MAX_SEGMENT_OVERLAP_IN_CHARS").isEmpty())
+                    ? String.valueOf(200) : System.getenv("MAX_SEGMENT_OVERLAP_IN_CHARS");
 
     public static final String USER_MEMORIES_SEARCH_LIMIT =
             (System.getenv("USER_MEMORIES_SEARCH_LIMIT") == null ||

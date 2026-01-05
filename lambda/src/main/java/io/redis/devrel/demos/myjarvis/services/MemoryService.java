@@ -107,7 +107,6 @@ public class MemoryService {
                 "user_id", Map.of("eq", userId),
                 "namespace", Map.of("eq", MEMORIES_NAMESPACE),
                 "text", memory,
-                "recent_boost", true,
                 "limit", USER_MEMORIES_SEARCH_LIMIT
         );
 

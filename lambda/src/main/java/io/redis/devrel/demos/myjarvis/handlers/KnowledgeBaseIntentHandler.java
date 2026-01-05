@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
+import dev.langchain4j.data.document.DocumentSplitter;
 import io.redis.devrel.demos.myjarvis.services.MemoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +34,16 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
     private final DocumentParser documentParser;
     private final MemoryService memoryService;
     private final AmazonS3 s3Client;
+    private final DocumentSplitter documentSplitter;
 
     public KnowledgeBaseIntentHandler(DocumentParser documentParser,
+                                      DocumentSplitter documentSplitter,
                                       MemoryService memoryService) {
         this.documentParser = documentParser;
+        this.documentSplitter = documentSplitter;
         this.memoryService = memoryService;
         this.s3Client = AmazonS3ClientBuilder.defaultClient();
+
     }
 
     @Override
@@ -59,8 +64,8 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
 
         var result = processFiles(filesToProcess);
 
-        logger.info("Completed - Total: {}, Processed: {}, Failed: {}",
-                result.total(), result.processed(), result.failed());
+        logger.info("Completed - Total files: {}, Processed: {}, Failed: {}, Total chunks: {}",
+                result.totalFiles(), result.processedFiles(), result.failedFiles(), result.totalChunks());
 
         return Optional.empty();
     }
@@ -90,51 +95,97 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
     }
 
     private ProcessingResult processFiles(List<S3ObjectSummary> files) {
-        var processed = new AtomicInteger(0);
-        var failed = new AtomicInteger(0);
+        var processedFiles = new AtomicInteger(0);
+        var failedFiles = new AtomicInteger(0);
+        var totalChunks = new AtomicInteger(0);
 
         files.parallelStream().forEach(file -> {
-            if (processFile(file)) {
-                processed.incrementAndGet();
+            var chunksCreated = processFile(file);
+            if (chunksCreated > 0) {
+                processedFiles.incrementAndGet();
+                totalChunks.addAndGet(chunksCreated);
             } else {
-                failed.incrementAndGet();
+                failedFiles.incrementAndGet();
             }
         });
 
-        return new ProcessingResult(files.size(), processed.get(), failed.get());
+        return new ProcessingResult(
+                files.size(),
+                processedFiles.get(),
+                failedFiles.get(),
+                totalChunks.get()
+        );
     }
 
-    private boolean processFile(S3ObjectSummary fileSummary) {
+    private int processFile(S3ObjectSummary fileSummary) {
         var fileKey = fileSummary.getKey();
+        var fileName = extractFileName(fileKey);
         var startTime = System.currentTimeMillis();
 
         try {
-            var documentText = parseDocument(fileKey);
-            if (documentText.isEmpty()) {
+            // Parse the document
+            var document = parseDocument(fileKey);
+            if (document.isEmpty()) {
                 moveToFailed(fileKey, "Empty or unparseable document");
-                return false;
+                return 0;
             }
 
-            // Store in knowledge base
-            memoryService.createKnowledgeBaseEntry(documentText.get());
+            // Split into segments
+            var segments = documentSplitter.split(document.get());
+            if (segments.isEmpty()) {
+                moveToFailed(fileKey, "No segments created from document");
+                return 0;
+            }
+
+            // Store each segment in knowledge base
+            var chunksStored = 0;
+            for (int i = 0; i < segments.size(); i++) {
+                var segment = segments.get(i);
+
+                // Skip very short segments
+                if (segment.text().trim().length() < 50) {
+                    continue;
+                }
+
+                // Create entry with metadata
+                var entryText = formatSegmentWithMetadata(
+                        segment.text(),
+                        fileName,
+                        i + 1,
+                        segments.size()
+                );
+
+                try {
+                    memoryService.createKnowledgeBaseEntry(entryText);
+                    chunksStored++;
+                } catch (Exception e) {
+                    logger.warn("Failed to store segment {} of {} from {}",
+                            i + 1, segments.size(), fileName, e);
+                }
+            }
+
+            if (chunksStored == 0) {
+                moveToFailed(fileKey, "No segments could be stored");
+                return 0;
+            }
 
             // Move to processed folder
             moveToProcessed(fileKey);
 
             var duration = System.currentTimeMillis() - startTime;
-            logger.info("Processed {} ({} bytes) in {}ms",
-                    fileKey, fileSummary.getSize(), duration);
+            logger.info("Processed {} ({} bytes) in {}ms - {} segments stored out of {} total",
+                    fileName, fileSummary.getSize(), duration, chunksStored, segments.size());
 
-            return true;
+            return chunksStored;
 
         } catch (Exception e) {
             logger.error("Failed to process {}", fileKey, e);
             moveToFailed(fileKey, e.getMessage());
-            return false;
+            return 0;
         }
     }
 
-    private Optional<String> parseDocument(String fileKey) {
+    private Optional<Document> parseDocument(String fileKey) {
         try (S3Object s3Object = s3Client.getObject(KNOWLEDGE_BASE_BUCKET_NAME, fileKey);
              InputStream inputStream = s3Object.getObjectContent()) {
 
@@ -145,12 +196,32 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
                 return Optional.empty();
             }
 
-            return Optional.of(document.text());
+            return Optional.of(document);
 
         } catch (Exception e) {
             logger.error("Parse error for {}", fileKey, e);
             return Optional.empty();
         }
+    }
+
+    private String formatSegmentWithMetadata(String segmentText,
+                                             String fileName,
+                                             int segmentNumber,
+                                             int totalSegments) {
+        // Add metadata header to help with context understanding
+        var metadata = String.format(
+                "[Document: %s | Section %d of %d]\n",
+                fileName,
+                segmentNumber,
+                totalSegments
+        );
+
+        return metadata + segmentText.trim();
+    }
+
+    private String extractFileName(String fileKey) {
+        var lastSlash = fileKey.lastIndexOf('/');
+        return lastSlash >= 0 ? fileKey.substring(lastSlash + 1) : fileKey;
     }
 
     private void moveToProcessed(String sourceKey) {
@@ -163,6 +234,8 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
             );
 
             s3Client.deleteObject(KNOWLEDGE_BASE_BUCKET_NAME, sourceKey);
+
+            logger.debug("Moved {} to processed folder", sourceKey);
 
         } catch (Exception e) {
             logger.warn("Could not move {} to processed folder", sourceKey, e);
@@ -187,5 +260,10 @@ public class KnowledgeBaseIntentHandler implements RequestHandler {
         }
     }
 
-    private record ProcessingResult(int total, int processed, int failed) {}
+    private record ProcessingResult(
+            int totalFiles,
+            int processedFiles,
+            int failedFiles,
+            int totalChunks
+    ) {}
 }
