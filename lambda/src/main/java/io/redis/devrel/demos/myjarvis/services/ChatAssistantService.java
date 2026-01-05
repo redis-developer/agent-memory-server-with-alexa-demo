@@ -2,25 +2,29 @@ package io.redis.devrel.demos.myjarvis.services;
 
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.aggregator.ContentAggregator;
+import dev.langchain4j.rag.content.aggregator.DefaultContentAggregator;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.router.LanguageModelQueryRouter;
+import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
+import dev.langchain4j.rag.query.transformer.QueryTransformer;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
-import io.redis.devrel.demos.myjarvis.extensions.TokenLimitingChatMemory;
+import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryChat;
 import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import static io.redis.devrel.demos.myjarvis.helpers.Constants.AGENT_MEMORY_SERVER_URL;
-import static io.redis.devrel.demos.myjarvis.helpers.Constants.OPENAI_CHAT_MAX_TOKENS;
+import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
 import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
 
 public class ChatAssistantService {
@@ -28,15 +32,12 @@ public class ChatAssistantService {
     private static final Logger logger = LoggerFactory.getLogger(ChatAssistantService.class);
 
     private final List<Object> tools;
-    private final TokenCountEstimator tokenCountEstimator;
     private final ChatModel chatModel;
     private final MemoryService memoryService;
 
-    public ChatAssistantService(TokenCountEstimator tokenCountEstimator,
-                                ChatModel chatModel,
+    public ChatAssistantService(ChatModel chatModel,
                                 MemoryService memoryService,
                                 List<Object> tools) {
-        this.tokenCountEstimator = tokenCountEstimator;
         this.chatModel = chatModel;
         this.memoryService = memoryService;
         this.tools = tools;
@@ -65,7 +66,7 @@ public class ChatAssistantService {
         ContextualChatAssistant contextualChatAssistant =
                 AiServices.builder(ContextualChatAssistant.class)
                         .chatModel(chatModel)
-                        .chatMemoryProvider(this::getChatMemory)
+                        .chatMemory(getChatMemory(userId))
                         .retrievalAugmentor(augmentor)
                         .tools(tools)
                         .build();
@@ -75,10 +76,13 @@ public class ChatAssistantService {
 
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
         Map<ContentRetriever, String> retrievers = Map.of(
-                getUserShortTermMemories(userId), "user specific short-term memories from recent conversations",
-                getUserLongTermMemories(userId), "user specific long-term memories, personal preferences and data",
-                getGeneralKnowledgeBase(), "not user specific general knowledge base with facts and data"
+                getAllUserMemories(userId), "User specific memories and details discussed",
+                getGeneralKnowledgeBase(), "General knowledge base with facts and data"
         );
+
+        // Compress the user's query and the preceding conversation into a single query.
+        // This should significantly improve the quality of the retrieval process.
+        QueryTransformer queryTransformer = new CompressingQueryTransformer(chatModel);
 
         // This router make sure to only query the retrievers that are relevant
         // to the user query. This is more efficient in terms of context size
@@ -88,23 +92,56 @@ public class ChatAssistantService {
                 .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.ROUTE_TO_ALL)
                 .build();
 
+        // Implements a two-stage Reciprocal Rank Fusion (RRF)
+        ContentAggregator contentAggregator = new DefaultContentAggregator();
+
         return DefaultRetrievalAugmentor.builder()
+                .queryTransformer(queryTransformer)
+                .contentAggregator(contentAggregator)
                 .queryRouter(router)
                 .build();
     }
 
-    private ContentRetriever getUserShortTermMemories(String userId) {
-        return query -> getChatMemory(userId).messages()
-                .stream()
-                .map(msg -> Content.from(messageContent(msg)))
-                .toList();
+    private ContentRetriever getAllUserMemories(String userId) {
+        return query -> {
+            Set<String> userMemories = new LinkedHashSet<>();
+
+            // Add short-term memories
+            ChatMemory chatMemory = getChatMemory(userId);
+            chatMemory.messages()
+                    .stream()
+                    .filter(msg -> msg instanceof UserMessage)
+                    .map(msg -> extractOriginalQuery(messageContent(msg)))
+                    .filter(cleanQuery -> !cleanQuery.isBlank())
+                    .forEach(userMemories::add);
+
+            // Add long-term memories
+            userMemories.addAll(memoryService.searchUserMemories(userId, query.text()));
+
+            return userMemories.stream()
+                    .map(Content::from)
+                    .toList();
+        };
     }
 
-    private ContentRetriever getUserLongTermMemories(String userId) {
-        return query -> memoryService.searchUserMemories(userId, query.text())
-                .stream()
-                .map(Content::from)
-                .toList();
+    private String extractOriginalQuery(String messageContent) {
+        if (!messageContent.contains("Query: ")) {
+            return "";
+        }
+
+        int queryStart = messageContent.indexOf("Query: ") + 7;
+        String fromQuery = messageContent.substring(queryStart);
+        int firstNewline = fromQuery.indexOf('\n');
+
+        String query = (firstNewline > 0)
+                ? fromQuery.substring(0, firstNewline).trim()
+                : fromQuery.trim();
+
+        if (query.startsWith("User asked to store this memory:")) {
+            return query.substring("User asked to store this memory:".length()).trim();
+        }
+
+        return query;
     }
 
     private ContentRetriever getGeneralKnowledgeBase() {
@@ -122,13 +159,12 @@ public class ChatAssistantService {
 
         ChatMemoryStore chatMemoryStore = WorkingMemoryStore.builder()
                 .agentMemoryServerUrl(AGENT_MEMORY_SERVER_URL)
+                .maxContextWindow(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
                 .build();
 
-        return TokenLimitingChatMemory.builder()
+        return WorkingMemoryChat.builder()
                 .id(id)
                 .chatMemoryStore(chatMemoryStore)
-                .maxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
-                .tokenEstimator(tokenCountEstimator)
                 .build();
     }
 

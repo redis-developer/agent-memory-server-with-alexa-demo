@@ -27,13 +27,12 @@ public class ConversationIntentHandler implements RequestHandler {
         the J.A.R.V.I.S personality.
     
         As for your specific instructions, The user will initiate a chat with you about a topic, and
-        you will provide answers based on the context given. Always bring up memories relevant to the
-        user's query. Leverage both the short-term (chat history) and long-term memories to provide
-        accurate answers. Never respond with another question, as the user is likely asking for an
-        opinion. Be thoughtful with your answers. Make sure to provide as many details as possible
-        in the attempt to be complete. Never store new user memories during this conversation.
-    
-        When providing answers, ensure you follow these guidelines:
+        you will provide answers based on the context given. Never respond with another question, as
+        the user is likely asking for an opinion or making an statement. Don't fabricate facts. If you
+        don't have relevant memories, it's okay to answer I don't know. Be objective with your answers.
+        Make sure to provide as many details as possible in the attempt to be complete. However, don't
+        bring up irrelevant memories, or details that don't apply to the question. Never store new user
+        memories during this conversation.
         
         CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
@@ -71,13 +70,9 @@ public class ConversationIntentHandler implements RequestHandler {
         
         Also, make sure to:
     
-        1. Only use the context that is relevant to the current query. Don't over do it.
-        2. If the user from the context matches the current user, they're the same person.
-        3. Don't fabricate answers. Stick with the facts and memories from the context.
-        4. If the question is not about general topics, then answer based on data you know. 
-        5. Keep your answer concise with three sentences top. Avoid listing items and bullet points.
-        6. Use gender-neutral language - avoid terms like 'sir' or 'madam'.
-        7. When talking about dates, use the format Month Day, Year (e.g., January 1, 2020).
+        1. Keep your answer concise with three sentences top. Avoid listing items and bullet points.
+        2. Use gender-neutral language - avoid terms like 'sir' or 'madam'.
+        3. When talking about dates, use the format Month Day, Year (e.g., January 1, 2020).
         """;
 
     private static final String FALLBACK_RESPONSE =
@@ -138,25 +133,13 @@ public class ConversationIntentHandler implements RequestHandler {
             logger.info("Processing conversation for user: {} with query: {}",
                     requestContext.userId(), query);
 
-            String question = String.format("""
-            User asked to recall this: %s
-            - sessionId: %s
-            - userId: %s
-            - timezone: %s
-            """,
-                    query,
-                    requestContext.sessionId(),
-                    requestContext.userId(),
-                    requestContext.timezone()
-            );
-
             var systemPrompt = String.format(SYSTEM_PROMPT, requestContext.timezone());
 
             var response = chatAssistantService.processQueryWithContext(
                     systemPrompt,
                     requestContext.userId(),
                     requestContext.userName(),
-                    question
+                    query
             );
 
             if (response == null || response.isBlank()) {

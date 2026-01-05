@@ -77,19 +77,6 @@
           ]
         },
         {
-          "name": "RecallIntent",
-          "slots": [
-            {
-              "name": "query",
-              "type": "AMAZON.SearchQuery"
-            }
-          ],
-          "samples": [
-            "to recall {query}",
-            "recall {query}"
-          ]
-        },
-        {
           "name": "ForgetIntent",
           "slots": [
             {
@@ -120,7 +107,9 @@
             "to verify {query}",
             "verify {query}",
             "to answer {query}",
-            "answer {query}"
+            "answer {query}",
+            "to recall {query}",
+            "recall {query}"
           ]
         },
         {

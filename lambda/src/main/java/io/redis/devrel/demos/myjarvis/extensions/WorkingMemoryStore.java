@@ -31,6 +31,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
     private long timeToLiveInSeconds = 300;
     private boolean storeSystemMessages = false;
     private String namespace = "chat-memory";
+    private int maxContextWindow = 1000;
 
     public WorkingMemoryStore(String agentMemoryServerUrl) {
         this.agentMemoryServerUrl = agentMemoryServerUrl;
@@ -41,7 +42,8 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         List<ChatMessage> chatMessages = new ArrayList<>();
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(agentMemoryServerUrl + "/v1/working-memory/" +
-                        memoryId + "?namespace=" + namespace))
+                        memoryId + "?namespace=" + namespace +
+                        "&context_window_max=" + maxContextWindow))
                 .GET()
                 .build();
 
@@ -63,6 +65,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
                             case "user" -> UserMessage.from(content);
                             case "assistant", "ai" -> AiMessage.from(content);
                             case "system" -> SystemMessage.from(content);
+                            case "tool" -> null;
                             default -> {
                                 if (!role.isEmpty()) {
                                     logger.warn("Unknown message role: {}", role);
@@ -109,14 +112,12 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             requestBody.put("session_id", memoryId.toString());
             requestBody.put("namespace", namespace);
             requestBody.put("ttl_seconds", timeToLiveInSeconds);
-            requestBody.put("long_term_memory_strategy",
-                    Map.of("strategy", "preferences",
-                            "config", Map.of()));
 
             String jsonPayload = objectMapper.writeValueAsString(requestBody);
 
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(agentMemoryServerUrl + "/v1/working-memory/" + memoryId))
+                    .uri(URI.create(agentMemoryServerUrl + "/v1/working-memory/" +
+                            memoryId + "?context_window_max=" + maxContextWindow))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofSeconds(3))
                     .PUT(HttpRequest.BodyPublishers.ofString(jsonPayload))
@@ -180,6 +181,14 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         this.namespace = namespace;
     }
 
+    public int getMaxContextWindow() {
+        return maxContextWindow;
+    }
+
+    public void setMaxContextWindow(int maxContextWindow) {
+        this.maxContextWindow = maxContextWindow;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -189,6 +198,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         private Optional<Long> timeToLiveInSeconds = Optional.empty();
         private Optional<Boolean> storeSystemMessages = Optional.empty();
         private Optional<String> namespace = Optional.empty();
+        private Optional<Integer> maxContextWindow = Optional.empty();
 
         public Builder agentMemoryServerUrl(String value) {
             this.agentMemoryServerUrl = value;
@@ -210,6 +220,11 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             return this;
         }
 
+        public Builder maxContextWindow(int value) {
+            this.maxContextWindow = Optional.of(value);
+            return this;
+        }
+
         public WorkingMemoryStore build() {
             if (agentMemoryServerUrl == null) {
                 throw new IllegalStateException("agentMemoryServerUrl is required");
@@ -219,6 +234,7 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             timeToLiveInSeconds.ifPresent(workingMemoryStore::setTimeToLiveInSeconds);
             storeSystemMessages.ifPresent(workingMemoryStore::setStoreSystemMessages);
             namespace.ifPresent(workingMemoryStore::setNamespace);
+            maxContextWindow.ifPresent(workingMemoryStore::setMaxContextWindow);
 
             return workingMemoryStore;
         }
