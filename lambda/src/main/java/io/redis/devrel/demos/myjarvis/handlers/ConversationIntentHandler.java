@@ -36,37 +36,37 @@ public class ConversationIntentHandler implements RequestHandler {
         
         CRITICAL: Call setUserTimeZone("%s") first, then getCurrentDateTime()
         
+        CRITICAL INSTRUCTION: You will receive multiple pieces of information in the
+        "Answer using the following information:" section. ONLY use the information that
+        is DIRECTLY RELEVANT to answering the user's specific question. Ignore unrelated
+        details, even if they're provided.
+        
+        For example:
+        - If asked about favorite color, ONLY mention color preferences
+        - If asked about programming, ONLY mention programming-related information
+        - Do NOT volunteer unrelated information just because it's in the context
+                
         Few-shot examples:
         
-        [Example 1]
-        User: "What do you think about the weather today?"
-        Context: [Memory: "User prefers outdoor activities on sunny days"]
-        Response: "The weather appears quite favorable for outdoor activities, which aligns well with your preferences for sunny days. The clear skies and moderate temperatures create ideal conditions for whatever adventures you have planned. I'd recommend taking advantage of these conditions while they last."
+        [Example 1 - Using only relevant context]
+        User: "What's my favorite color?"
+        Context: [Memory: "Favorite color is black", "Enjoys coding in Java", "Has a dog named Max"]
+        Response: "Your favorite color is black."
         
-        [Example 2]
-        User: "I'm thinking about getting a new car"
-        Context: [Memory: "Current car is a 2018 Honda Accord with 80,000 miles"]
-        Response: "Given that your 2018 Honda Accord has accumulated 80,000 miles, considering a replacement seems prudent. Modern vehicles offer significant improvements in efficiency, safety features, and technology integration since 2018. The timing appears favorable as your current vehicle still holds reasonable trade-in value."
+        [Example 2 - Ignoring irrelevant context]
+        User: "What programming language do I use?"
+        Context: [Memory: "Enjoys coding in Java", "Favorite color is black", "Birthday is October 5th"]
+        Response: "You enjoy coding in Java."
         
-        [Example 3]
-        User: "Tell me about artificial intelligence"
-        Context: [No relevant memories]
-        Response: "Artificial intelligence represents one of humanity's most transformative technologies, enabling machines to perform tasks that typically require human intelligence. From natural language processing that powers our conversation to computer vision and predictive analytics, AI is reshaping industries and daily life. The field continues to evolve rapidly with developments in machine learning and neural networks expanding capabilities exponentially."
+        [Example 3 - When asked about weather, ignore unrelated memories]
+        User: "How's the weather today?"
+        Context: [Memory: "Favorite color is black", "Enjoys coding in Java"]
+        Response: "I'd need to check current weather data to provide an accurate report. The memories available don't contain weather information."
         
-        [Example 4]
-        User: "I'm feeling stressed about work"
-        Context: [Memory: "Works as software engineer at tech startup", "Usually exercises to relieve stress"]
-        Response: "The demanding nature of software engineering at a startup can indeed be overwhelming, and acknowledging this stress is the first step toward managing it. Your established routine of using exercise for stress relief remains one of the most effective strategies, as physical activity releases endorphins and provides mental clarity. Perhaps scheduling regular breaks and maintaining clear boundaries between work and personal time would complement your exercise routine effectively."
-        
-        [Example 5]
-        User: "What should I cook for dinner?"
-        Context: [Memory: "Enjoys Italian cuisine", "Recently bought fresh basil and tomatoes"]
-        Response: "With the fresh basil and tomatoes you recently acquired, a classic Italian dish would be an excellent choice for tonight's dinner. A homemade margherita pizza or pasta pomodoro would showcase these ingredients beautifully while satisfying your preference for Italian cuisine. The freshness of your ingredients will elevate even the simplest preparation into something truly delightful."
-        
-        [Example 6]
-        User: "How's the stock market doing?"
-        Context: [Memory: "Has investments in tech stocks and index funds"]
-        Response: "The market has shown mixed signals recently, with tech stocks experiencing volatility that may affect your portfolio's performance. Your index fund investments provide good diversification and typically weather short-term fluctuations better than individual stocks. Market conditions suggest maintaining a long-term perspective while monitoring any significant shifts in the technology sector."
+        [Example 4 - Comprehensive when relevant]
+        User: "Tell me about my preferences"
+        Context: [Memory: "Favorite color is black", "Enjoys coding in Java", "Likes Italian food"]
+        Response: "Your preferences include black as your favorite color, a passion for coding in Java, and an appreciation for Italian cuisine."
         
         Also, make sure to:
     

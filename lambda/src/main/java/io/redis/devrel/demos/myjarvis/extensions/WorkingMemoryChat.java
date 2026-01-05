@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
+
 public class WorkingMemoryChat implements ChatMemory {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkingMemoryChat.class);
@@ -36,12 +38,78 @@ public class WorkingMemoryChat implements ChatMemory {
     @Override
     public void add(ChatMessage message) {
         if (message == null) {
+            logger.warn("Attempted to add null message");
             return;
         }
 
-        messages.add(message);
-        logger.debug("Number of chat messages is {}", messages.size());
-        chatMemoryStore.updateMessages(id, messages);
+        logger.info("Adding message type: {}", message.getClass().getSimpleName());
+
+        try {
+            // Only clean AFTER the assistant has responded
+            if (message instanceof AiMessage && !messages.isEmpty()) {
+                logger.info("Processing AiMessage, cleaning previous UserMessage");
+
+                // Clean the PREVIOUS user message if it exists
+                int lastUserIndex = -1;
+                for (int i = messages.size() - 1; i >= 0; i--) {
+                    if (messages.get(i) instanceof UserMessage) {
+                        lastUserIndex = i;
+                        break;
+                    }
+                }
+
+                if (lastUserIndex >= 0) {
+                    String content = messageContent(messages.get(lastUserIndex));
+                    logger.info("Cleaning user message at index {}: {}", lastUserIndex,
+                            content.substring(0, Math.min(100, content.length())));
+
+                    String cleanContent = extractOriginalQuery(content);
+                    if (!cleanContent.isBlank()) {
+                        messages.set(lastUserIndex, UserMessage.from("Query: " + cleanContent));
+                        logger.info("Cleaned to: Query: {}", cleanContent);
+                    }
+                }
+            }
+
+            // Add the new message as-is
+            messages.add(message);
+            logger.debug("Number of chat messages is {}", messages.size());
+            chatMemoryStore.updateMessages(id, messages);
+
+        } catch (Exception ex) {
+            logger.error("Error adding message", ex);
+            // Still add the message even if cleaning failed
+            messages.add(message);
+            chatMemoryStore.updateMessages(id, messages);
+        }
+    }
+
+    private String extractOriginalQuery(String messageContent) {
+        if (!messageContent.contains("Query: ")) {
+            return messageContent;
+        }
+
+        int queryStart = messageContent.indexOf("Query: ") + 7;
+        String fromQuery = messageContent.substring(queryStart);
+
+        // Find where the actual query ends (before augmentation)
+        int augmentStart = fromQuery.indexOf("\n\nAnswer using");
+        if (augmentStart > 0) {
+            fromQuery = fromQuery.substring(0, augmentStart).trim();
+        } else {
+            // No augmentation, look for newline
+            int firstNewline = fromQuery.indexOf('\n');
+            if (firstNewline > 0) {
+                fromQuery = fromQuery.substring(0, firstNewline).trim();
+            }
+        }
+
+        // Handle special cases
+        if (fromQuery.startsWith("User asked to store this memory:")) {
+            return fromQuery.substring("User asked to store this memory:".length()).trim();
+        }
+
+        return fromQuery;
     }
 
     @Override

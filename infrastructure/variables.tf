@@ -45,6 +45,12 @@ variable "openai_api_key" {
   sensitive   = true
 }
 
+variable "openai_embedding_model_name" {
+  description = "OpenAI model name for the skill"
+  type        = string
+  default = "text-embedding-3-small"
+}
+
 variable "openai_model_name" {
   description = "OpenAI model name for the skill"
   type        = string

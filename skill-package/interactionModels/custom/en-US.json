@@ -98,6 +98,8 @@
             }
           ],
           "samples": [
+            "to confirm {query}",
+            "confirm {query}",
             "to discuss {query}",
             "discuss {query}",
             "to suggest {query}",
@@ -109,7 +111,19 @@
             "to answer {query}",
             "answer {query}",
             "to recall {query}",
-            "recall {query}"
+            "recall {query}",
+            "to list {query}",
+            "list {query}",
+            "to explain {query}",
+            "explain {query}",
+            "to describe {query}",
+            "describe {query}",
+            "to tell me {query}",
+            "tell me {query}",
+            "to give me {query}",
+            "give me {query}",
+            "to find {query}",
+            "find {query}"
           ]
         },
         {

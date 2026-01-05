@@ -1,7 +1,5 @@
 package io.redis.devrel.demos.myjarvis.services;
 
-import dev.langchain4j.data.message.*;
-import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
@@ -19,13 +17,10 @@ import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
-import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
 
 public class ChatAssistantService {
 
@@ -76,8 +71,8 @@ public class ChatAssistantService {
 
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
         Map<ContentRetriever, String> retrievers = Map.of(
-                getAllUserMemories(userId), "User specific memories and details discussed",
-                getGeneralKnowledgeBase(), "General knowledge base with facts and data"
+                getLongTermMemories(userId), "User specific memories like preferences, events, and interactions",
+                getGeneralKnowledgeBase(), "General knowledge base (not user related) with facts and data"
         );
 
         // Compress the user's query and the preceding conversation into a single query.
@@ -102,46 +97,18 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ContentRetriever getAllUserMemories(String userId) {
+    private ContentRetriever getLongTermMemories(String userId) {
         return query -> {
-            Set<String> userMemories = new LinkedHashSet<>();
+            String queryText = query.text();
+            logger.debug("Searching long-term memories for user {} with query: {}", userId, queryText);
 
-            // Add short-term memories
-            ChatMemory chatMemory = getChatMemory(userId);
-            chatMemory.messages()
-                    .stream()
-                    .filter(msg -> msg instanceof UserMessage)
-                    .map(msg -> extractOriginalQuery(messageContent(msg)))
-                    .filter(cleanQuery -> !cleanQuery.isBlank())
-                    .forEach(userMemories::add);
+            List<String> memories = memoryService.searchUserMemories(userId, queryText);
+            logger.debug("Found {} long-term memories: {}", memories.size(), memories);
 
-            // Add long-term memories
-            userMemories.addAll(memoryService.searchUserMemories(userId, query.text()));
-
-            return userMemories.stream()
+            return memories.stream()
                     .map(Content::from)
                     .toList();
         };
-    }
-
-    private String extractOriginalQuery(String messageContent) {
-        if (!messageContent.contains("Query: ")) {
-            return "";
-        }
-
-        int queryStart = messageContent.indexOf("Query: ") + 7;
-        String fromQuery = messageContent.substring(queryStart);
-        int firstNewline = fromQuery.indexOf('\n');
-
-        String query = (firstNewline > 0)
-                ? fromQuery.substring(0, firstNewline).trim()
-                : fromQuery.trim();
-
-        if (query.startsWith("User asked to store this memory:")) {
-            return query.substring("User asked to store this memory:".length()).trim();
-        }
-
-        return query;
     }
 
     private ContentRetriever getGeneralKnowledgeBase() {
@@ -151,7 +118,7 @@ public class ChatAssistantService {
                 .toList();
     }
 
-    private ChatMemory getChatMemory(Object memoryId) {
+    private WorkingMemoryChat getChatMemory(Object memoryId) {
         if (!(memoryId instanceof String id)) {
             logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
             throw new IllegalArgumentException("memoryId must be a String");
