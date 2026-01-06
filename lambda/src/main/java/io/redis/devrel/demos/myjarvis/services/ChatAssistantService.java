@@ -1,8 +1,8 @@
 package io.redis.devrel.demos.myjarvis.services;
 
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
@@ -67,7 +67,7 @@ public class ChatAssistantService {
         ContextualChatAssistant contextualChatAssistant =
                 AiServices.builder(ContextualChatAssistant.class)
                         .chatModel(chatModel)
-                        .chatMemory(getChatMemory(userId))
+                        .chatMemoryProvider(this::getChatMemory)
                         .retrievalAugmentor(augmentor)
                         .tools(tools)
                         .build();
@@ -111,7 +111,7 @@ public class ChatAssistantService {
             Set<String> userMemories = new LinkedHashSet<>();
 
             // Add recent conversation messages
-            WorkingMemoryChat chatMemory = getChatMemory(userId);
+            ChatMemory chatMemory = getChatMemory(userId);
             chatMemory.messages()
                     .stream()
                     .filter(msg -> msg instanceof UserMessage)
@@ -166,7 +166,7 @@ public class ChatAssistantService {
                 .toList();
     }
 
-    private WorkingMemoryChat getChatMemory(Object memoryId) {
+    private ChatMemory getChatMemory(Object memoryId) {
         if (!(memoryId instanceof String id)) {
             logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
             throw new IllegalArgumentException("memoryId must be a String");
