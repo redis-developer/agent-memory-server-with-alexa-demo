@@ -116,8 +116,8 @@
             "explain {query}",
             "to describe {query}",
             "describe {query}",
-            "to tell me {query}",
-            "tell me {query}"
+            "to confirm {query}",
+            "confirm {query}"
           ]
         },
         {

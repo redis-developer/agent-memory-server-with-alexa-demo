@@ -8,7 +8,9 @@ import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.parser.apache.pdfbox.ApachePdfBoxDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import io.redis.devrel.demos.myjarvis.handlers.*;
 import io.redis.devrel.demos.myjarvis.helpers.UserDoesNotExistExceptionHandler;
 import io.redis.devrel.demos.myjarvis.helpers.UserValidationInterceptor;
@@ -32,6 +34,11 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
             Integer.parseInt(MAX_SEGMENT_SIZE_IN_CHARS),
             Integer.parseInt(MAX_SEGMENT_OVERLAP_IN_CHARS)
     );
+    private static final EmbeddingModel embeddingModel = OpenAiEmbeddingModel.builder()
+            .apiKey(OPENAI_API_KEY)
+            .modelName(OPENAI_EMBEDDING_MODEL_NAME)
+            .build();
+
     private static final ChatModel chatModel = OpenAiChatModel.builder()
             .apiKey(OPENAI_API_KEY)
             .modelName(OPENAI_MODEL_NAME)

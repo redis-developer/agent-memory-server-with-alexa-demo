@@ -1,11 +1,14 @@
 package io.redis.devrel.demos.myjarvis.services;
 
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.aggregator.ContentAggregator;
-import dev.langchain4j.rag.content.aggregator.DefaultContentAggregator;
+import dev.langchain4j.rag.content.injector.ContentInjector;
+import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.router.LanguageModelQueryRouter;
 import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
@@ -17,10 +20,13 @@ import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
+import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
 
 public class ChatAssistantService {
 
@@ -71,7 +77,7 @@ public class ChatAssistantService {
 
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
         Map<ContentRetriever, String> retrievers = Map.of(
-                getLongTermMemories(userId), "User specific memories like preferences, events, and interactions",
+                getAllUserMemories(userId), "User specific memories like preferences, events, and interactions",
                 getGeneralKnowledgeBase(), "General knowledge base (not user related) with facts and data"
         );
 
@@ -87,28 +93,70 @@ public class ChatAssistantService {
                 .fallbackStrategy(LanguageModelQueryRouter.FallbackStrategy.ROUTE_TO_ALL)
                 .build();
 
-        // Implements a two-stage Reciprocal Rank Fusion (RRF)
-        ContentAggregator contentAggregator = new DefaultContentAggregator();
+        ContentInjector contentInjector = DefaultContentInjector.builder()
+                .promptTemplate(PromptTemplate.from(
+                        "{{userMessage}}\n\n[Context]\n{{contents}}"
+                ))
+                .build();
 
         return DefaultRetrievalAugmentor.builder()
                 .queryTransformer(queryTransformer)
-                .contentAggregator(contentAggregator)
+                .contentInjector(contentInjector)
                 .queryRouter(router)
                 .build();
     }
 
-    private ContentRetriever getLongTermMemories(String userId) {
+    private ContentRetriever getAllUserMemories(String userId) {
         return query -> {
-            String queryText = query.text();
-            logger.debug("Searching long-term memories for user {} with query: {}", userId, queryText);
+            Set<String> userMemories = new LinkedHashSet<>();
 
-            List<String> memories = memoryService.searchUserMemories(userId, queryText);
-            logger.debug("Found {} long-term memories: {}", memories.size(), memories);
+            // Add recent conversation messages
+            WorkingMemoryChat chatMemory = getChatMemory(userId);
+            chatMemory.messages()
+                    .stream()
+                    .filter(msg -> msg instanceof UserMessage)
+                    .map(msg -> {
+                        String content = messageContent(msg);
+                        return extractOriginalMessage(content);
+                    })
+                    .filter(content -> !content.isBlank())
+                    .forEach(userMemories::add);
 
-            return memories.stream()
+            // Add long-term memories (these use semantic search)
+            userMemories.addAll(memoryService.searchUserMemories(userId, query.text()));
+
+            return userMemories.stream()
                     .map(Content::from)
                     .toList();
         };
+    }
+
+    private String extractOriginalMessage(String messageContent) {
+        if (!messageContent.contains("Query: ")) {
+            return messageContent;
+        }
+
+        int queryStart = messageContent.indexOf("Query: ") + 7;
+        String fromQuery = messageContent.substring(queryStart);
+
+        // Find where the actual query ends (before augmentation)
+        int augmentStart = fromQuery.indexOf("\n\nAnswer using");
+        if (augmentStart > 0) {
+            fromQuery = fromQuery.substring(0, augmentStart).trim();
+        } else {
+            // No augmentation, look for newline
+            int firstNewline = fromQuery.indexOf('\n');
+            if (firstNewline > 0) {
+                fromQuery = fromQuery.substring(0, firstNewline).trim();
+            }
+        }
+
+        // Handle special cases
+        if (fromQuery.startsWith("User asked to store this memory:")) {
+            return fromQuery.substring("User asked to store this memory:".length()).trim();
+        }
+
+        return fromQuery;
     }
 
     private ContentRetriever getGeneralKnowledgeBase() {
