@@ -1,6 +1,5 @@
 package io.redis.devrel.demos.myjarvis.services;
 
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.input.PromptTemplate;
@@ -20,13 +19,10 @@ import io.redis.devrel.demos.myjarvis.extensions.WorkingMemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
-import static io.redis.devrel.demos.myjarvis.helpers.MessageHelper.messageContent;
 
 public class ChatAssistantService {
 
@@ -77,8 +73,8 @@ public class ChatAssistantService {
 
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
         Map<ContentRetriever, String> retrievers = Map.of(
-                getAllUserMemories(userId), "User specific memories like preferences, events, and interactions",
-                getGeneralKnowledgeBase(), "General knowledge base (not user related) with facts and data"
+                getLongTermMemories(userId), "User specific memories like preferences, events, and interactions",
+                getGeneralKnowledgeBase(), "General knowledge base (not really user related) with facts and data"
         );
 
         // Compress the user's query and the preceding conversation into a single query.
@@ -106,57 +102,11 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ContentRetriever getAllUserMemories(String userId) {
-        return query -> {
-            Set<String> userMemories = new LinkedHashSet<>();
-
-            // Add recent conversation messages
-            ChatMemory chatMemory = getChatMemory(userId);
-            chatMemory.messages()
-                    .stream()
-                    .filter(msg -> msg instanceof UserMessage)
-                    .map(msg -> {
-                        String content = messageContent(msg);
-                        return extractOriginalMessage(content);
-                    })
-                    .filter(content -> !content.isBlank())
-                    .forEach(userMemories::add);
-
-            // Add long-term memories (these use semantic search)
-            userMemories.addAll(memoryService.searchUserMemories(userId, query.text()));
-
-            return userMemories.stream()
-                    .map(Content::from)
-                    .toList();
-        };
-    }
-
-    private String extractOriginalMessage(String messageContent) {
-        if (!messageContent.contains("Query: ")) {
-            return messageContent;
-        }
-
-        int queryStart = messageContent.indexOf("Query: ") + 7;
-        String fromQuery = messageContent.substring(queryStart);
-
-        // Find where the actual query ends (before augmentation)
-        int augmentStart = fromQuery.indexOf("\n\nAnswer using");
-        if (augmentStart > 0) {
-            fromQuery = fromQuery.substring(0, augmentStart).trim();
-        } else {
-            // No augmentation, look for newline
-            int firstNewline = fromQuery.indexOf('\n');
-            if (firstNewline > 0) {
-                fromQuery = fromQuery.substring(0, firstNewline).trim();
-            }
-        }
-
-        // Handle special cases
-        if (fromQuery.startsWith("User asked to store this memory:")) {
-            return fromQuery.substring("User asked to store this memory:".length()).trim();
-        }
-
-        return fromQuery;
+    private ContentRetriever getLongTermMemories(String userId) {
+        return query -> memoryService.searchUserMemories(userId, query.text())
+                .stream()
+                .map(Content::from)
+                .toList();
     }
 
     private ContentRetriever getGeneralKnowledgeBase() {

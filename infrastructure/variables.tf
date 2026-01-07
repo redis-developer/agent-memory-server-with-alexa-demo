@@ -50,12 +50,6 @@ variable "openai_model_name" {
   type        = string
 }
 
-variable "openai_embedding_model_name" {
-  description = "OpenAI embedding model name for the skill"
-  type        = string
-  default = "text-embedding-3-small"
-}
-
 variable "openai_chat_temperature" {
   description = "Temperature setting for OpenAI chat model"
   type        = number

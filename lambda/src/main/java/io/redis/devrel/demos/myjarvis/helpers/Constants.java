@@ -29,7 +29,6 @@ public enum Constants {
     public static final String AGENT_MEMORY_SERVER_URL = System.getenv("AGENT_MEMORY_SERVER_URL");
     public static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
     public static final String OPENAI_MODEL_NAME = System.getenv("OPENAI_MODEL_NAME");
-    public static final String OPENAI_EMBEDDING_MODEL_NAME = System.getenv("OPENAI_EMBEDDING_MODEL_NAME");
     public static final String OPENAI_CHAT_TEMPERATURE = System.getenv("OPENAI_CHAT_TEMPERATURE");
     public static final String OPENAI_CHAT_MAX_TOKENS = System.getenv("OPENAI_CHAT_MAX_TOKENS");
     public static final String KNOWLEDGE_BASE_BUCKET_NAME = System.getenv("KNOWLEDGE_BASE_BUCKET_NAME");
