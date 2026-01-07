@@ -63,7 +63,7 @@ public class ChatAssistantService {
         ContextualChatAssistant contextualChatAssistant =
                 AiServices.builder(ContextualChatAssistant.class)
                         .chatModel(chatModel)
-                        .chatMemoryProvider(this::getChatMemory)
+                        .chatMemoryProvider(this::getShortTermMemories)
                         .retrievalAugmentor(augmentor)
                         .tools(tools)
                         .build();
@@ -102,21 +102,7 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ContentRetriever getLongTermMemories(String userId) {
-        return query -> memoryService.searchUserMemories(userId, query.text())
-                .stream()
-                .map(Content::from)
-                .toList();
-    }
-
-    private ContentRetriever getGeneralKnowledgeBase() {
-        return query -> memoryService.searchKnowledgeBase(query.text())
-                .stream()
-                .map(Content::from)
-                .toList();
-    }
-
-    private ChatMemory getChatMemory(Object memoryId) {
+    private ChatMemory getShortTermMemories(Object memoryId) {
         if (!(memoryId instanceof String id)) {
             logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
             throw new IllegalArgumentException("memoryId must be a String");
@@ -131,6 +117,20 @@ public class ChatAssistantService {
                 .id(id)
                 .chatMemoryStore(chatMemoryStore)
                 .build();
+    }
+
+    private ContentRetriever getLongTermMemories(String userId) {
+        return query -> memoryService.searchUserMemories(userId, query.text())
+                .stream()
+                .map(Content::from)
+                .toList();
+    }
+
+    private ContentRetriever getGeneralKnowledgeBase() {
+        return query -> memoryService.searchKnowledgeBase(query.text())
+                .stream()
+                .map(Content::from)
+                .toList();
     }
 
 }
