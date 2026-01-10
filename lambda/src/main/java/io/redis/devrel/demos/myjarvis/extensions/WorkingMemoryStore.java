@@ -30,7 +30,9 @@ public class WorkingMemoryStore implements ChatMemoryStore {
     private final String agentMemoryServerUrl;
     private long timeToLiveInSeconds = 300;
     private boolean storeSystemMessages = false;
-    private String namespace = "chat-memory";
+    private boolean storeAiMessages = false;
+    private boolean storeToolMessages = false;
+    private String namespace = "short-term-memory";
     private int maxContextWindow = 1000;
 
     public WorkingMemoryStore(String agentMemoryServerUrl) {
@@ -56,8 +58,10 @@ public class WorkingMemoryStore implements ChatMemoryStore {
                         var role = messageNode.path("role").asText("");
                         var content = messageNode.path("content").asText("");
 
-                        // Skip system messages if we're not storing them
-                        if (!storeSystemMessages && "system".equalsIgnoreCase(role)) {
+                        // Skip messages based on configuration
+                        if ((!storeSystemMessages && "system".equalsIgnoreCase(role)) ||
+                                (!storeAiMessages && "ai".equalsIgnoreCase(role)) ||
+                                (!storeToolMessages && "tool".equalsIgnoreCase(role))) {
                             continue;
                         }
 
@@ -92,11 +96,12 @@ public class WorkingMemoryStore implements ChatMemoryStore {
     @Override
     public void updateMessages(Object memoryId, List<ChatMessage> list) {
         try {
-            // Filter out system messages if storeSystemMessages is false
-            List<ChatMessage> messagesToStore = storeSystemMessages ? list :
-                    list.stream()
-                            .filter(msg -> !(msg instanceof SystemMessage))
-                            .toList();
+            // Filter out system and AI messages based on configuration
+            List<ChatMessage> messagesToStore = list.stream()
+                    .filter(msg -> storeSystemMessages || !(msg instanceof SystemMessage))
+                    .filter(msg -> storeAiMessages || !(msg instanceof AiMessage))
+                    .filter(msg -> storeToolMessages || !(msg instanceof ToolExecutionResultMessage))
+                    .toList();
 
             List<Map<String, String>> messages = messagesToStore.stream()
                     .map(message -> {
@@ -108,10 +113,13 @@ public class WorkingMemoryStore implements ChatMemoryStore {
                     .collect(Collectors.toList());
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("messages", messages);
             requestBody.put("session_id", memoryId.toString());
+            requestBody.put("messages", messages);
             requestBody.put("namespace", namespace);
             requestBody.put("ttl_seconds", timeToLiveInSeconds);
+            requestBody.put("long_term_memory_strategy",
+                    Map.of("strategy", "preferences",
+                            "config", Map.of()));
 
             String jsonPayload = objectMapper.writeValueAsString(requestBody);
 
@@ -173,6 +181,22 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         this.storeSystemMessages = storeSystemMessages;
     }
 
+    public boolean isStoreAiMessages() {
+        return storeAiMessages;
+    }
+
+    public void setStoreAiMessages(boolean storeAiMessages) {
+        this.storeAiMessages = storeAiMessages;
+    }
+
+    public boolean isStoreToolMessages() {
+        return storeToolMessages;
+    }
+
+    public void setStoreToolMessages(boolean storeToolMessages) {
+        this.storeToolMessages = storeToolMessages;
+    }
+
     public String getNamespace() {
         return namespace;
     }
@@ -197,6 +221,8 @@ public class WorkingMemoryStore implements ChatMemoryStore {
         private String agentMemoryServerUrl;
         private Optional<Long> timeToLiveInSeconds = Optional.empty();
         private Optional<Boolean> storeSystemMessages = Optional.empty();
+        private Optional<Boolean> storeAiMessages = Optional.empty();
+        private Optional<Boolean> storeToolMessages = Optional.empty();
         private Optional<String> namespace = Optional.empty();
         private Optional<Integer> maxContextWindow = Optional.empty();
 
@@ -212,6 +238,16 @@ public class WorkingMemoryStore implements ChatMemoryStore {
 
         public Builder storeSystemMessages(boolean value) {
             this.storeSystemMessages = Optional.of(value);
+            return this;
+        }
+
+        public Builder storeAiMessages(boolean value) {
+            this.storeAiMessages = Optional.of(value);
+            return this;
+        }
+
+        public Builder storeToolMessages(boolean value) {
+            this.storeToolMessages = Optional.of(value);
             return this;
         }
 
@@ -233,6 +269,8 @@ public class WorkingMemoryStore implements ChatMemoryStore {
             WorkingMemoryStore workingMemoryStore = new WorkingMemoryStore(agentMemoryServerUrl);
             timeToLiveInSeconds.ifPresent(workingMemoryStore::setTimeToLiveInSeconds);
             storeSystemMessages.ifPresent(workingMemoryStore::setStoreSystemMessages);
+            storeAiMessages.ifPresent(workingMemoryStore::setStoreAiMessages);
+            storeToolMessages.ifPresent(workingMemoryStore::setStoreToolMessages);
             namespace.ifPresent(workingMemoryStore::setNamespace);
             maxContextWindow.ifPresent(workingMemoryStore::setMaxContextWindow);
 

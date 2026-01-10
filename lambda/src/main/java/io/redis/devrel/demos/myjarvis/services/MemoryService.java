@@ -26,8 +26,9 @@ public class MemoryService {
             .version(HttpClient.Version.HTTP_2)
             .build();
 
-    private static final String MEMORIES_NAMESPACE = "memories";
-    private static final String KNOWLEDGE_NAMESPACE = "knowledge";
+    private static final String SHORT_TERM_MEMORY_NAMESPACE = "short-term-memory";
+    private static final String LONG_TERM_MEMORY_NAMESPACE = "long-term-memory";
+    private static final String KNOWLEDGE_NAMESPACE = "knowledge-base";
     private static final String MEMORY_TYPE_SEMANTIC = "semantic";
 
     private static ObjectMapper createObjectMapper() {
@@ -39,7 +40,10 @@ public class MemoryService {
     public Optional<String> getUserMemoryId(String userId, String memory) {
         var searchRequest = Map.of(
                 "user_id", Map.of("eq", userId),
-                "namespace", Map.of("eq", MEMORIES_NAMESPACE),
+                "namespace", Map.of("any", List.of(),
+                        SHORT_TERM_MEMORY_NAMESPACE,
+                        LONG_TERM_MEMORY_NAMESPACE
+                ),
                 "text", memory,
                 "limit", 1
         );
@@ -50,6 +54,19 @@ public class MemoryService {
                 .map(node -> node.get("id").asText());
     }
 
+    public List<String> searchUserMemories(String userId, String memory) {
+        var searchRequest = Map.of(
+                "session_id", Map.of("eq", userId),
+                "namespace", Map.of("any",
+                        List.of(SHORT_TERM_MEMORY_NAMESPACE,
+                                LONG_TERM_MEMORY_NAMESPACE)),
+                "text", memory,
+                "limit", USER_MEMORIES_SEARCH_LIMIT
+        );
+
+        return extractTexts(executeSearch(searchRequest));
+    }
+
     public boolean createUserMemory(String sessionId, String userId,
                                     String timezone, String memory) {
         var currentDateTime = getDateAndTime(timezone);
@@ -58,9 +75,8 @@ public class MemoryService {
         var memoryData = Map.of(
                 "memories", List.of(Map.of(
                         "id", sessionId,
-                        "session_id", sessionId,
-                        "user_id", userId,
-                        "namespace", MEMORIES_NAMESPACE,
+                        "session_id", userId,
+                        "namespace", LONG_TERM_MEMORY_NAMESPACE,
                         "text", formattedMemory,
                         "memory_type", MEMORY_TYPE_SEMANTIC
                 ))
@@ -100,17 +116,6 @@ public class MemoryService {
             logger.error("Error deleting the long-term memory", ex);
             return false;
         }
-    }
-
-    public List<String> searchUserMemories(String userId, String memory) {
-        var searchRequest = Map.of(
-                "user_id", Map.of("eq", userId),
-                "namespace", Map.of("eq", MEMORIES_NAMESPACE),
-                "text", memory,
-                "limit", USER_MEMORIES_SEARCH_LIMIT
-        );
-
-        return extractTexts(executeSearch(searchRequest));
     }
 
     public void createKnowledgeBaseEntry(String memory) {
@@ -197,6 +202,7 @@ public class MemoryService {
                 if (!memories.isEmpty()) {
                     var result = new ArrayList<JsonNode>();
                     memories.forEach(result::add);
+                    logger.debug("Number of memories returned: {}", memories.size());
                     return result;
                 }
             }

@@ -8,7 +8,9 @@ import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.parser.apache.pdfbox.ApachePdfBoxDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.scoring.ScoringModel;
 import io.redis.devrel.demos.myjarvis.handlers.*;
 import io.redis.devrel.demos.myjarvis.helpers.UserDoesNotExistExceptionHandler;
 import io.redis.devrel.demos.myjarvis.helpers.UserValidationInterceptor;
@@ -40,13 +42,18 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
             .maxTokens(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
             .build();
 
+    private static final ScoringModel scoringModel = CohereScoringModel.builder()
+            .apiKey(COHERE_API_KEY)
+            .modelName(COHERE_MODEL_NAME)
+            .build();
+
     // Service components
     private static final ReminderService reminderService = new ReminderService();
     private static final MemoryService memoryService = new MemoryService();
     private static final UserService userService = new UserService();
     private static final ChatAssistantService chatAssistantService =
             new ChatAssistantService(
-                    chatModel, memoryService,
+                    chatModel, scoringModel, memoryService,
                     List.of(
                             new DateTimeTool(),
                             new AgentMemoryServerTool(),

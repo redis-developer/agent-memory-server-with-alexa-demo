@@ -144,6 +144,8 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
       OPENAI_MODEL_NAME            = var.openai_model_name
       OPENAI_CHAT_TEMPERATURE      = var.openai_chat_temperature
       OPENAI_CHAT_MAX_TOKENS       = var.openai_chat_max_tokens
+      COHERE_API_KEY               = var.cohere_api_key
+      COHERE_MODEL_NAME            = var.cohere_model_name
       AGENT_MEMORY_SERVER_URL      = "http://${aws_eip.agent_memory_server.public_ip}:8000"
       KNOWLEDGE_BASE_BUCKET_NAME   = local.knowledge_base_bucket_name
     }

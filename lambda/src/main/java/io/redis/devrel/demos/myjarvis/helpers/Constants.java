@@ -1,7 +1,5 @@
 package io.redis.devrel.demos.myjarvis.helpers;
 
-import java.time.Duration;
-
 public enum Constants {
     INSTANCE;
     public static final String SKILL_NAME = "My Jarvis";
@@ -31,6 +29,8 @@ public enum Constants {
     public static final String OPENAI_MODEL_NAME = System.getenv("OPENAI_MODEL_NAME");
     public static final String OPENAI_CHAT_TEMPERATURE = System.getenv("OPENAI_CHAT_TEMPERATURE");
     public static final String OPENAI_CHAT_MAX_TOKENS = System.getenv("OPENAI_CHAT_MAX_TOKENS");
+    public static final String COHERE_API_KEY = System.getenv("COHERE_API_KEY");
+    public static final String COHERE_MODEL_NAME = System.getenv("COHERE_MODEL_NAME");
     public static final String KNOWLEDGE_BASE_BUCKET_NAME = System.getenv("KNOWLEDGE_BASE_BUCKET_NAME");
 
     public static final String MAX_SEGMENT_SIZE_IN_CHARS =

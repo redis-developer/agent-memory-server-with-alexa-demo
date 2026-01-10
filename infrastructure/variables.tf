@@ -40,7 +40,7 @@ variable "essentials_plan_cloud_region" {
 }
 
 variable "openai_api_key" {
-  description = "OpenAI API key for memory server"
+  description = "OpenAI API key"
   type        = string
   sensitive   = true
 }
@@ -60,6 +60,18 @@ variable "openai_chat_max_tokens" {
   description = "Maximum tokens for OpenAI chat model"
   type        = number
   default     = 4096
+}
+
+variable "cohere_api_key" {
+  description = "Cohere API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "cohere_model_name" {
+  description = "Model name for scoring model"
+  type        = string
+  default = "rerank-multilingual-v3.0"
 }
 
 variable "alexa_skill_id" {
