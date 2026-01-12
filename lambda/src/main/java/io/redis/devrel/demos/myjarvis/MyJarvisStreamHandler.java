@@ -77,7 +77,6 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
                         new HelpIntentHandler(),
                         new UserIntroIntentHandler(userService, chatAssistantService),
                         new RememberIntentHandler(chatAssistantService),
-                        new ForgetIntentHandler(memoryService, chatAssistantService),
                         new ConversationIntentHandler(chatAssistantService),
                         new AgentMemoryServerIntentHandler(chatAssistantService),
                         new KnowledgeBaseIntentHandler(documentParser, documentSplitter, memoryService)

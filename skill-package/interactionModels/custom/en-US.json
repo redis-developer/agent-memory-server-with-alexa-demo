@@ -77,19 +77,6 @@
           ]
         },
         {
-          "name": "ForgetIntent",
-          "slots": [
-            {
-              "name": "memory",
-              "type": "AMAZON.SearchQuery"
-            }
-          ],
-          "samples": [
-            "to forget {memory}",
-            "forget {memory}"
-          ]
-        },
-        {
           "name": "ConversationIntent",
           "slots": [
             {
