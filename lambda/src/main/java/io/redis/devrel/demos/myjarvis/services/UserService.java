@@ -77,7 +77,7 @@ public class UserService {
         try {
             var requestBody = objectMapper.writeValueAsString(searchRequest);
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search"))
+                    .uri(URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
@@ -136,7 +136,7 @@ public class UserService {
         try {
             var requestBody = objectMapper.writeValueAsString(longTermMemory);
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"))
+                    .uri(URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();

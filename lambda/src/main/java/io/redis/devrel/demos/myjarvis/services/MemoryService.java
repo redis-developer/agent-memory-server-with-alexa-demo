@@ -84,7 +84,7 @@ public class MemoryService {
 
         try {
             var request = buildJsonRequest(
-                    URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"),
+                    URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"),
                     memoryData,
                     "POST"
             );
@@ -105,7 +105,7 @@ public class MemoryService {
     public boolean deleteUserMemory(String sessionId) {
         try {
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory?memory_ids=" + sessionId))
+                    .uri(URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory?memory_ids=" + sessionId))
                     .DELETE()
                     .build();
 
@@ -137,7 +137,7 @@ public class MemoryService {
 
         try {
             var request = buildJsonRequest(
-                    URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"),
+                    URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/"),
                     memoryData,
                     "POST"
             );
@@ -188,7 +188,7 @@ public class MemoryService {
     private List<JsonNode> executeSearch(Map<String, Object> searchRequest) {
         try {
             var request = buildJsonRequest(
-                    URI.create(AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search?optimize_query=false"),
+                    URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory/search?optimize_query=false"),
                     searchRequest,
                     "POST"
             );

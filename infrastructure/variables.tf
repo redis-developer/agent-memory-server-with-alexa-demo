@@ -74,6 +74,22 @@ variable "cohere_model_name" {
   default = "rerank-multilingual-v3.0"
 }
 
+variable "langcache_api_base_url" {
+  description = "LangCache API base URL"
+  type        = string
+}
+
+variable "langcache_api_key" {
+  description = "LangCache API key"
+  type        = string
+  sensitive   = true
+}
+
+variable "langcache_cache_id" {
+  description = "LangCache cache ID"
+  type        = string
+}
+
 variable "alexa_skill_id" {
   type = string
 }

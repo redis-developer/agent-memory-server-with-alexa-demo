@@ -24,7 +24,10 @@ public enum Constants {
     public static final String MEMORY_PARAM = "memory";
     public static final String QUERY_PARAM = "query";
 
-    public static final String AGENT_MEMORY_SERVER_URL = System.getenv("AGENT_MEMORY_SERVER_URL");
+    public static final String REDIS_AGENT_MEMORY_SERVER_URL = System.getenv("REDIS_AGENT_MEMORY_SERVER_URL");
+    public static final String REDIS_LANGCACHE_API_BASE_URL = System.getenv("REDIS_LANGCACHE_API_BASE_URL");
+    public static final String REDIS_LANGCACHE_API_KEY = System.getenv("REDIS_LANGCACHE_API_KEY");
+    public static final String REDIS_LANGCACHE_CACHE_ID = System.getenv("REDIS_LANGCACHE_CACHE_ID");
     public static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
     public static final String OPENAI_MODEL_NAME = System.getenv("OPENAI_MODEL_NAME");
     public static final String OPENAI_CHAT_TEMPERATURE = System.getenv("OPENAI_CHAT_TEMPERATURE");

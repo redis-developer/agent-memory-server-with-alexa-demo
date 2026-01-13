@@ -35,14 +35,17 @@ public class ChatAssistantService {
     private final ChatModel chatModel;
     private final ScoringModel scoringModel;
     private final MemoryService memoryService;
+    private final LangCacheService langCacheService;
 
     public ChatAssistantService(ChatModel chatModel,
                                 ScoringModel scoringModel,
                                 MemoryService memoryService,
+                                LangCacheService langCacheService,
                                 List<Object> tools) {
         this.chatModel = chatModel;
         this.scoringModel = scoringModel;
         this.memoryService = memoryService;
+        this.langCacheService = langCacheService;
         this.tools = tools;
     }
 
@@ -64,17 +67,22 @@ public class ChatAssistantService {
                                           String query) {
         logger.debug("Processing query with context for user: {}", userId);
 
-        RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
+        return langCacheService.searchForResponse(userId, query)
+                .orElseGet(() -> {
+                    RetrievalAugmentor augmentor = createRetrievalAugmentor(userId);
 
-        ContextualChatAssistant contextualChatAssistant =
-                AiServices.builder(ContextualChatAssistant.class)
-                        .chatModel(chatModel)
-                        .chatMemoryProvider(this::getShortTermMemories)
-                        .retrievalAugmentor(augmentor)
-                        .tools(tools)
-                        .build();
+                    ContextualChatAssistant contextualChatAssistant =
+                            AiServices.builder(ContextualChatAssistant.class)
+                                .chatModel(chatModel)
+                                .chatMemory(getChatMemory(userId))
+                                .retrievalAugmentor(augmentor)
+                                .tools(tools)
+                                .build();
 
-        return contextualChatAssistant.chat(systemPrompt, userId, userName, query);
+                    String response = contextualChatAssistant.chat(systemPrompt, userId, userName, query);
+                    langCacheService.addNewResponse(userId, query, response);
+                    return response;
+                });
     }
 
     private RetrievalAugmentor createRetrievalAugmentor(String userId) {
@@ -104,7 +112,6 @@ public class ChatAssistantService {
                 ))
                 .build();
 
-
         // Once the contents are retrieved, we need to aggregate them into
         // a content list that is coherent and relevant to the user's query.
         ContentAggregator contentAggregator = ReRankingContentAggregator.builder()
@@ -120,19 +127,14 @@ public class ChatAssistantService {
                 .build();
     }
 
-    private ChatMemory getShortTermMemories(Object memoryId) {
-        if (!(memoryId instanceof String id)) {
-            logger.error("memoryId must be a String, but was: {}", memoryId.getClass().getName());
-            throw new IllegalArgumentException("memoryId must be a String");
-        }
-
+    private ChatMemory getChatMemory(String userId) {
         ChatMemoryStore chatMemoryStore = WorkingMemoryStore.builder()
-                .agentMemoryServerUrl(AGENT_MEMORY_SERVER_URL)
+                .agentMemoryServerUrl(REDIS_AGENT_MEMORY_SERVER_URL)
                 .maxContextWindow(Integer.parseInt(OPENAI_CHAT_MAX_TOKENS))
                 .build();
 
         return WorkingMemoryChat.builder()
-                .id(id)
+                .id(userId)
                 .chatMemoryStore(chatMemoryStore)
                 .build();
     }

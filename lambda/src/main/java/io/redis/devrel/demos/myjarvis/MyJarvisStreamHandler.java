@@ -14,10 +14,7 @@ import dev.langchain4j.model.scoring.ScoringModel;
 import io.redis.devrel.demos.myjarvis.handlers.*;
 import io.redis.devrel.demos.myjarvis.helpers.UserDoesNotExistExceptionHandler;
 import io.redis.devrel.demos.myjarvis.helpers.UserValidationInterceptor;
-import io.redis.devrel.demos.myjarvis.services.ChatAssistantService;
-import io.redis.devrel.demos.myjarvis.services.MemoryService;
-import io.redis.devrel.demos.myjarvis.services.ReminderService;
-import io.redis.devrel.demos.myjarvis.services.UserService;
+import io.redis.devrel.demos.myjarvis.services.*;
 import io.redis.devrel.demos.myjarvis.tools.AgentMemoryServerTool;
 import io.redis.devrel.demos.myjarvis.tools.DateTimeTool;
 import io.redis.devrel.demos.myjarvis.tools.UserMemoryTool;
@@ -48,12 +45,18 @@ public class MyJarvisStreamHandler extends SkillStreamHandler {
             .build();
 
     // Service components
+    private static final LangCacheService langCacheService = LangCacheService.builder()
+            .baseUrl(REDIS_LANGCACHE_API_BASE_URL)
+            .apiKey(REDIS_LANGCACHE_API_KEY)
+            .cacheId(REDIS_LANGCACHE_CACHE_ID)
+            .build();
+
     private static final ReminderService reminderService = new ReminderService();
     private static final MemoryService memoryService = new MemoryService();
     private static final UserService userService = new UserService();
     private static final ChatAssistantService chatAssistantService =
             new ChatAssistantService(
-                    chatModel, scoringModel, memoryService,
+                    chatModel, scoringModel, memoryService, langCacheService,
                     List.of(
                             new DateTimeTool(),
                             new AgentMemoryServerTool(),

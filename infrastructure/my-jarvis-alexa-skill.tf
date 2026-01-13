@@ -18,7 +18,7 @@ data "local_file" "my_jarvis_skill_handler_jar_file" {
 }
 
 resource "aws_s3_bucket" "my_jarvis_alexa_skill_handler_lambda_artifacts" {
-  bucket        = "${var.application_prefix}-lambda-artifacts"
+  bucket = "${var.application_prefix}-lambda-artifacts"
 }
 
 resource "aws_s3_object" "my_jarvis_skill_handler_lambda_jar" {
@@ -34,8 +34,8 @@ data "aws_s3_bucket" "existing_knowledge_base" {
 }
 
 resource "aws_s3_bucket" "my_jarvis_alexa_skill_handler_knowledge_base" {
-  count         = var.create_knowledge_base_bucket ? 1 : 0
-  bucket        = var.knowledge_base_bucket_name
+  count  = var.create_knowledge_base_bucket ? 1 : 0
+  bucket = var.knowledge_base_bucket_name
 }
 
 locals {
@@ -140,14 +140,17 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
   timeout          = 60
   environment {
     variables = {
-      OPENAI_API_KEY               = var.openai_api_key
-      OPENAI_MODEL_NAME            = var.openai_model_name
-      OPENAI_CHAT_TEMPERATURE      = var.openai_chat_temperature
-      OPENAI_CHAT_MAX_TOKENS       = var.openai_chat_max_tokens
-      COHERE_API_KEY               = var.cohere_api_key
-      COHERE_MODEL_NAME            = var.cohere_model_name
-      AGENT_MEMORY_SERVER_URL      = "http://${aws_eip.agent_memory_server.public_ip}:8000"
-      KNOWLEDGE_BASE_BUCKET_NAME   = local.knowledge_base_bucket_name
+      OPENAI_API_KEY                = var.openai_api_key
+      OPENAI_MODEL_NAME             = var.openai_model_name
+      OPENAI_CHAT_TEMPERATURE       = var.openai_chat_temperature
+      OPENAI_CHAT_MAX_TOKENS        = var.openai_chat_max_tokens
+      COHERE_API_KEY                = var.cohere_api_key
+      COHERE_MODEL_NAME             = var.cohere_model_name
+      REDIS_LANGCACHE_API_BASE_URL  = var.langcache_api_base_url
+      REDIS_LANGCACHE_API_KEY       = var.langcache_api_key
+      REDIS_LANGCACHE_CACHE_ID      = var.langcache_cache_id
+      REDIS_AGENT_MEMORY_SERVER_URL = "http://${aws_eip.agent_memory_server.public_ip}:8000"
+      KNOWLEDGE_BASE_BUCKET_NAME    = local.knowledge_base_bucket_name
     }
   }
 }

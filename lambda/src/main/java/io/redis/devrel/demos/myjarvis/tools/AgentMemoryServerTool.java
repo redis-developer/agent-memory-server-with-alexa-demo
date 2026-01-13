@@ -24,7 +24,7 @@ public class AgentMemoryServerTool {
     @Tool("Check the agent memory server health")
     public boolean checkAgentMemoryServerHealth() {
         var request = HttpRequest.newBuilder()
-                .uri(URI.create(AGENT_MEMORY_SERVER_URL + "/v1/health"))
+                .uri(URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/health"))
                 .GET()
                 .build();
 
