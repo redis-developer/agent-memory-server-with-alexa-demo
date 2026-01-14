@@ -84,7 +84,7 @@ resource "aws_instance" "agent_memory_server" {
     volume_type = "gp3"
   }
 
-  user_data_base64 = base64encode(templatefile("templates/ec2-instance-setup.tftpl", {
+  user_data_base64 = base64encode(templatefile("templates/agent-memory-server.tftpl", {
     redis_database_url = var.database_predefined ? "redis://default:${data.rediscloud_essentials_database.redis_database[0].password}@${data.rediscloud_essentials_database.redis_database[0].public_endpoint}" : "redis://default:${rediscloud_essentials_database.redis_database[0].password}@${rediscloud_essentials_database.redis_database[0].public_endpoint}"
     openai_api_key     = var.openai_api_key
   }))

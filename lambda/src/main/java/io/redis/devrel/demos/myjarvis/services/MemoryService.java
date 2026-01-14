@@ -11,9 +11,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static io.redis.devrel.demos.myjarvis.helpers.Constants.*;
@@ -37,23 +34,6 @@ public class MemoryService {
         return mapper;
     }
 
-    public Optional<String> getUserMemoryId(String userId, String memory) {
-        var searchRequest = Map.of(
-                "user_id", Map.of("eq", userId),
-                "namespace", Map.of("any", List.of(),
-                        SHORT_TERM_MEMORY_NAMESPACE,
-                        LONG_TERM_MEMORY_NAMESPACE
-                ),
-                "text", memory,
-                "limit", 1
-        );
-
-        return executeSearch(searchRequest)
-                .stream()
-                .findFirst()
-                .map(node -> node.get("id").asText());
-    }
-
     public List<String> searchUserMemories(String userId, String memory) {
         var searchRequest = Map.of(
                 "session_id", Map.of("eq", userId),
@@ -69,15 +49,12 @@ public class MemoryService {
 
     public boolean createUserMemory(String sessionId, String userId,
                                     String timezone, String memory) {
-        var currentDateTime = getDateAndTime(timezone);
-        var formattedMemory = "Memory from %s: %s".formatted(currentDateTime, memory);
-
         var memoryData = Map.of(
                 "memories", List.of(Map.of(
                         "id", sessionId,
                         "session_id", userId,
                         "namespace", LONG_TERM_MEMORY_NAMESPACE,
-                        "text", formattedMemory,
+                        "text", memory,
                         "memory_type", MEMORY_TYPE_SEMANTIC
                 ))
         );
@@ -100,22 +77,6 @@ public class MemoryService {
         }
 
         return false;
-    }
-
-    public boolean deleteUserMemory(String sessionId) {
-        try {
-            var request = HttpRequest.newBuilder()
-                    .uri(URI.create(REDIS_AGENT_MEMORY_SERVER_URL + "/v1/long-term-memory?memory_ids=" + sessionId))
-                    .DELETE()
-                    .build();
-
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            return response.statusCode() == HttpStatus.SC_OK;
-        } catch (Exception ex) {
-            logger.error("Error deleting the long-term memory", ex);
-            return false;
-        }
     }
 
     public void createKnowledgeBaseEntry(String memory) {
@@ -156,13 +117,6 @@ public class MemoryService {
         );
 
         return extractTexts(executeSearch(searchRequest));
-    }
-
-    private String getDateAndTime(String timezone) {
-        ZoneId zone = ZoneId.of(timezone);
-        var now = ZonedDateTime.now(zone);
-        var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").withZone(zone);
-        return formatter.format(now);
     }
 
     private HttpRequest buildJsonRequest(URI uri, Object body, String method) {
