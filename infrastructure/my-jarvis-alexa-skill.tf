@@ -1,5 +1,5 @@
 resource "null_resource" "my_jarvis_alexa_skill_handler_build" {
-  depends_on = [aws_instance.agent_memory_server]
+  depends_on = [aws_ecs_service.agent_memory_server]
 
   triggers = {
     always_run = timestamp()
@@ -125,7 +125,7 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
   depends_on = [
     null_resource.my_jarvis_alexa_skill_handler_build,
     aws_iam_role.my_jarvis_alexa_skill_handler_role,
-    aws_instance.agent_memory_server,
+    aws_ecs_service.agent_memory_server,
     aws_s3_object.my_jarvis_skill_handler_lambda_jar
   ]
   function_name    = "${var.application_prefix}-function"
@@ -149,7 +149,7 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
       REDIS_LANGCACHE_API_BASE_URL  = var.langcache_api_base_url
       REDIS_LANGCACHE_API_KEY       = var.langcache_api_key
       REDIS_LANGCACHE_CACHE_ID      = var.langcache_cache_id
-      REDIS_AGENT_MEMORY_SERVER_URL = "http://${aws_eip.agent_memory_server.public_ip}:8000"
+      REDIS_AGENT_MEMORY_SERVER_URL = "http://${aws_lb.agent_memory_server.dns_name}:8000"
       KNOWLEDGE_BASE_BUCKET_NAME    = local.knowledge_base_bucket_name
     }
   }

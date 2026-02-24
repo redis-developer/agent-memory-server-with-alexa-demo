@@ -90,6 +90,12 @@ variable "langcache_cache_id" {
   type        = string
 }
 
+variable "agent_memory_server_image" {
+  description = "Container image for the Redis Agent Memory Server"
+  type        = string
+  default     = "redislabs/agent-memory-server:0.13.2"
+}
+
 variable "alexa_skill_id" {
   type = string
 }

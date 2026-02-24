@@ -35,7 +35,7 @@ This demo demonstrates how [Redis Agent Memory Server](https://redis.github.io/a
 ### Account Requirements
 | Account                                                  | Description                                                    |
 |:---------------------------------------------------------|:---------------------------------------------------------------|
-| [AWS account](https://aws.amazon.com/account)            | Required to create Lambda, IAM, EC2, and CloudWatch resources. |
+| [AWS account](https://aws.amazon.com/account)            | Required to create Lambda, IAM, ECS, and CloudWatch resources. |
 | [Amazon developer account](https://developer.amazon.com) | This is needed to register, deploy, and test Alexa skills.     |
 | [OpenAI](https://auth.openai.com/create-account)         | LLM that will power the intelligent responses for the skill.   |
 | [Cohere](https://cohere.com)                             | Scoring model used to deduplicate memories from the context.   |
@@ -44,7 +44,7 @@ This demo demonstrates how [Redis Agent Memory Server](https://redis.github.io/a
 ### Configuration
 
 #### AWS Setup
-1. Install the AWS CLI: [Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+1. In[README.md](README.md)stall the AWS CLI: [Installation Guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 2. Configure your credentials:
    ```sh
    aws configure
