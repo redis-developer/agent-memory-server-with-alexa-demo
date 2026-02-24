@@ -96,6 +96,102 @@ variable "agent_memory_server_image" {
   default     = "redislabs/agent-memory-server:0.13.2"
 }
 
+variable "api_desired_count" {
+  description = "Desired task count for the Agent Memory API service"
+  type        = number
+  default     = 1
+}
+
+variable "worker_desired_count" {
+  description = "Desired task count for the Agent Memory worker service"
+  type        = number
+  default     = 1
+}
+
+variable "api_min_capacity" {
+  description = "Minimum task count for API autoscaling"
+  type        = number
+  default     = 1
+}
+
+variable "api_max_capacity" {
+  description = "Maximum task count for API autoscaling"
+  type        = number
+  default     = 4
+}
+
+variable "worker_min_capacity" {
+  description = "Minimum task count for worker autoscaling"
+  type        = number
+  default     = 1
+}
+
+variable "worker_max_capacity" {
+  description = "Maximum task count for worker autoscaling"
+  type        = number
+  default     = 4
+}
+
+variable "api_cpu_target" {
+  description = "Target CPU utilization percentage for API autoscaling"
+  type        = number
+  default     = 60
+}
+
+variable "api_memory_target" {
+  description = "Target memory utilization percentage for API autoscaling"
+  type        = number
+  default     = 70
+}
+
+variable "worker_cpu_target" {
+  description = "Target CPU utilization percentage for worker autoscaling"
+  type        = number
+  default     = 60
+}
+
+variable "worker_memory_target" {
+  description = "Target memory utilization percentage for worker autoscaling"
+  type        = number
+  default     = 70
+}
+
+variable "api_scale_in_cooldown" {
+  description = "Scale-in cooldown (seconds) for API autoscaling"
+  type        = number
+  default     = 120
+}
+
+variable "api_scale_out_cooldown" {
+  description = "Scale-out cooldown (seconds) for API autoscaling"
+  type        = number
+  default     = 60
+}
+
+variable "worker_scale_in_cooldown" {
+  description = "Scale-in cooldown (seconds) for worker autoscaling"
+  type        = number
+  default     = 120
+}
+
+variable "worker_scale_out_cooldown" {
+  description = "Scale-out cooldown (seconds) for worker autoscaling"
+  type        = number
+  default     = 60
+}
+
+variable "enable_alb_request_scaling" {
+  description = "Enable ALB request count autoscaling for the API service"
+  type        = bool
+  default     = false
+}
+
+variable "api_alb_requests_per_target" {
+  description = "Target ALB requests per target for API autoscaling"
+  type        = number
+  default     = 100
+}
+
 variable "alexa_skill_id" {
   type = string
 }

@@ -142,8 +142,8 @@ resource "aws_cloudwatch_log_group" "agent_memory_server_worker" {
   retention_in_days = 7
 }
 
-resource "aws_ecs_task_definition" "agent_memory_server" {
-  family                   = "${var.application_prefix}-agent-memory-server"
+resource "aws_ecs_task_definition" "agent_memory_server_api" {
+  family                   = "${var.application_prefix}-agent-memory-api"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
@@ -182,10 +182,22 @@ resource "aws_ecs_task_definition" "agent_memory_server" {
         }
       }
     },
+  ])
+}
+
+resource "aws_ecs_task_definition" "agent_memory_server_worker" {
+  family                   = "${var.application_prefix}-agent-memory-worker"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 1024
+  memory                   = 2048
+  execution_role_arn       = aws_iam_role.agent_memory_server_task_execution.arn
+
+  container_definitions = jsonencode([
     {
       name      = "memory-worker"
       image     = var.agent_memory_server_image
-      essential = false
+      essential = true
       command   = ["agent-memory", "task-worker", "--concurrency", "10"]
       environment = [
         { name = "DISABLE_AUTH", value = "true" },
@@ -207,11 +219,11 @@ resource "aws_ecs_task_definition" "agent_memory_server" {
   ])
 }
 
-resource "aws_ecs_service" "agent_memory_server" {
-  name            = "${var.application_prefix}-agent-memory-server"
+resource "aws_ecs_service" "agent_memory_server_api" {
+  name            = "${var.application_prefix}-agent-memory-api"
   cluster         = aws_ecs_cluster.agent_memory_server.id
-  task_definition = aws_ecs_task_definition.agent_memory_server.arn
-  desired_count   = 1
+  task_definition = aws_ecs_task_definition.agent_memory_server_api.arn
+  desired_count   = var.api_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -227,6 +239,128 @@ resource "aws_ecs_service" "agent_memory_server" {
   }
 
   depends_on = [aws_lb_listener.agent_memory_server]
+}
+
+resource "aws_ecs_service" "agent_memory_server_worker" {
+  name            = "${var.application_prefix}-agent-memory-worker"
+  cluster         = aws_ecs_cluster.agent_memory_server.id
+  task_definition = aws_ecs_task_definition.agent_memory_server_worker.arn
+  desired_count   = var.worker_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.agent_memory_server_tasks.id]
+    assign_public_ip = true
+  }
+}
+
+resource "aws_appautoscaling_target" "agent_memory_server_api" {
+  max_capacity       = var.api_max_capacity
+  min_capacity       = var.api_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.agent_memory_server.name}/${aws_ecs_service.agent_memory_server_api.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_target" "agent_memory_server_worker" {
+  max_capacity       = var.worker_max_capacity
+  min_capacity       = var.worker_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.agent_memory_server.name}/${aws_ecs_service.agent_memory_server_worker.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "agent_memory_server_api_cpu" {
+  name               = "${var.application_prefix}-ams-api-cpu"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.agent_memory_server_api.resource_id
+  scalable_dimension = aws_appautoscaling_target.agent_memory_server_api.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.agent_memory_server_api.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.api_cpu_target
+    scale_in_cooldown  = var.api_scale_in_cooldown
+    scale_out_cooldown = var.api_scale_out_cooldown
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "agent_memory_server_api_memory" {
+  name               = "${var.application_prefix}-ams-api-memory"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.agent_memory_server_api.resource_id
+  scalable_dimension = aws_appautoscaling_target.agent_memory_server_api.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.agent_memory_server_api.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.api_memory_target
+    scale_in_cooldown  = var.api_scale_in_cooldown
+    scale_out_cooldown = var.api_scale_out_cooldown
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "agent_memory_server_api_alb_requests" {
+  count              = var.enable_alb_request_scaling ? 1 : 0
+  name               = "${var.application_prefix}-ams-api-alb-requests"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.agent_memory_server_api.resource_id
+  scalable_dimension = aws_appautoscaling_target.agent_memory_server_api.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.agent_memory_server_api.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.api_alb_requests_per_target
+    scale_in_cooldown  = var.api_scale_in_cooldown
+    scale_out_cooldown = var.api_scale_out_cooldown
+
+    predefined_metric_specification {
+      predefined_metric_type = "ALBRequestCountPerTarget"
+      resource_label         = "${aws_lb.agent_memory_server.arn_suffix}/${aws_lb_target_group.agent_memory_server.arn_suffix}"
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "agent_memory_server_worker_cpu" {
+  name               = "${var.application_prefix}-ams-worker-cpu"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.agent_memory_server_worker.resource_id
+  scalable_dimension = aws_appautoscaling_target.agent_memory_server_worker.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.agent_memory_server_worker.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.worker_cpu_target
+    scale_in_cooldown  = var.worker_scale_in_cooldown
+    scale_out_cooldown = var.worker_scale_out_cooldown
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "agent_memory_server_worker_memory" {
+  name               = "${var.application_prefix}-ams-worker-memory"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.agent_memory_server_worker.resource_id
+  scalable_dimension = aws_appautoscaling_target.agent_memory_server_worker.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.agent_memory_server_worker.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.worker_memory_target
+    scale_in_cooldown  = var.worker_scale_in_cooldown
+    scale_out_cooldown = var.worker_scale_out_cooldown
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+  }
 }
 
 output "agent_memory_server_api_endpoint" {

@@ -1,5 +1,5 @@
 resource "null_resource" "my_jarvis_alexa_skill_handler_build" {
-  depends_on = [aws_ecs_service.agent_memory_server]
+  depends_on = [aws_ecs_service.agent_memory_server_api]
 
   triggers = {
     always_run = timestamp()
@@ -125,7 +125,7 @@ resource "aws_lambda_function" "my_jarvis_alexa_skill_handler" {
   depends_on = [
     null_resource.my_jarvis_alexa_skill_handler_build,
     aws_iam_role.my_jarvis_alexa_skill_handler_role,
-    aws_ecs_service.agent_memory_server,
+    aws_ecs_service.agent_memory_server_api,
     aws_s3_object.my_jarvis_skill_handler_lambda_jar
   ]
   function_name    = "${var.application_prefix}-function"
